@@ -1,3 +1,14 @@
+"""
+
+djsupervisor.config:  config loading and merging code for djsupervisor
+----------------------------------------------------------------------
+
+The code in this module is responsible for finding the supervisord.conf
+files from all installed apps, merging them together with the config
+files from your project and any options specified on the command-line,
+and producing a final config file to control supervisord/supervisorctl.
+
+"""
 
 import os
 import hashlib
@@ -15,12 +26,12 @@ from django.utils.importlib import import_module
  
 
 def get_merged_config(**options):
-    """Get the final merged configuration for supvervisord, as a StringIO.
+    """Get the final merged configuration for supvervisord, as a string.
 
     This is the top-level function exported by this module.  It collects
     the various config files from installed applications and the main project,
     combines them together based on prioerity, and returns the resulting
-    configuration as a readable StringIO object.
+    configuration as a string.
     """
     #  Find and load the containing project module.
     #  This is assumed to be the top-level package containing settings module.
@@ -33,50 +44,63 @@ def get_merged_config(**options):
         raise RuntimeError(msg)
     #  Start from the default configuration options.
     data = render_config(DEFAULT_CONFIG,projmod)
-    merged_cfg = RawConfigParser()
-    merged_cfg.readfp(StringIO(data))
+    cfg = RawConfigParser()
+    cfg.readfp(StringIO(data))
     #  Add in each app-specific file as we find it.
     for data in find_app_configs(projmod):
-        merged_cfg.readfp(StringIO(data))
+        cfg.readfp(StringIO(data))
     #  And add in the project-specific config file.
     projcfg = os.path.join(projdir,"supervisord.conf")
     if os.path.isfile(projcfg):
         with open(projcfg,"r") as f:
             data = render_config(f.read(),projmod)
-        merged_cfg.readfp(StringIO(data))
-    #  Process any default options.
-    #     TODO 
+        cfg.readfp(StringIO(data))
+    #  Add options from [program:__defaults__] to each program section
+    #  if it happens to be missing that option.
+    PROG_DEFAULT = "program:__defaults__"
+    if cfg.has_section(PROG_DEFAULT):
+        for option in cfg.options(PROG_DEFAULT):
+            default = cfg.get(PROG_DEFAULT,option)
+            for section in cfg.sections():
+                if section.startswith("program:"):
+                    if not cfg.has_option(section,option):
+                        cfg.set(section,option,default)
+        cfg.remove_section(PROG_DEFAULT)
     #  Add in the options specified on the command-line.
-    merged_cfg.readfp(StringIO(get_config_from_options(**options)))
+    cfg.readfp(StringIO(get_config_from_options(**options)))
     #  Make sure we've got a port configured for supervisorctl to
     #  talk to supervisord.  It's passworded based on secret key.
     #  If they have configured a unix socket then use that, otherwise
     #  use an inet server on localhost at fixed-but-randomish port.
     username = hashlib.md5(settings.SECRET_KEY).hexdigest()
     password = hashlib.md5(username).hexdigest()
-    if merged_cfg.has_section("unix_http_server"):
-        set_if_missing(merged_cfg,"unix_http_server","username",username)
-        set_if_missing(merged_cfg,"unix_http_server","password",password)
-        serverurl = "unix://" + merged_cfg.get("unix_http_server","file")
+    if cfg.has_section("unix_http_server"):
+        set_if_missing(cfg,"unix_http_server","username",username)
+        set_if_missing(cfg,"unix_http_server","password",password)
+        serverurl = "unix://" + cfg.get("unix_http_server","file")
     else:
         port = int(hashlib.md5(password).hexdigest()[:3],16) % 1000
         addr = "127.0.0.1:9%03d" % (port,)
-        set_if_missing(merged_cfg,"inet_http_server","port",addr)
-        set_if_missing(merged_cfg,"inet_http_server","username",username)
-        set_if_missing(merged_cfg,"inet_http_server","password",password)
-        serverurl = "http://" + merged_cfg.get("inet_http_server","port")
-    set_if_missing(merged_cfg,"supervisorctl","serverurl",serverurl)
-    set_if_missing(merged_cfg,"supervisorctl","username",username)
-    set_if_missing(merged_cfg,"supervisorctl","password",password)
-    set_if_missing(merged_cfg,"rpcinterface:supervisor",
-                              "supervisor.rpcinterface_factory",
-                              "supervisor.rpcinterface:make_main_rpcinterface")
-    #  Write it out to a StringIO
+        set_if_missing(cfg,"inet_http_server","port",addr)
+        set_if_missing(cfg,"inet_http_server","username",username)
+        set_if_missing(cfg,"inet_http_server","password",password)
+        serverurl = "http://" + cfg.get("inet_http_server","port")
+    set_if_missing(cfg,"supervisorctl","serverurl",serverurl)
+    set_if_missing(cfg,"supervisorctl","username",username)
+    set_if_missing(cfg,"supervisorctl","password",password)
+    set_if_missing(cfg,"rpcinterface:supervisor",
+                       "supervisor.rpcinterface_factory",
+                       "supervisor.rpcinterface:make_main_rpcinterface")
+    #  Sanity-check to give better error messages.
+    for section in cfg.sections():
+        if section.startswith("program:"):
+            if not cfg.has_option(section,"command"):
+                msg = "Process name '%s' has no command configured"
+                raise ValueError(msg % (section.split(":",1)[-1]))
+    #  Write it out to a StringIO and return the data
     s = StringIO()
-    merged_cfg.write(s)
-    s.seek(0)
-    print s.getvalue()
-    return s
+    cfg.write(s)
+    return s.getvalue()
 
 
 def render_config(data,proj,app=None):
@@ -135,7 +159,7 @@ def get_config_from_options(**options):
         data.append("[supervisord]\nnodaemon=false\n")
     else:
         data.append("[supervisord]\nnodaemon=true\n")
-    for progame, in options.get("launch",None) or []:
+    for progname in options.get("launch",None) or []:
         data.append("[program:%s]\nautostart=true\n" % (progname,))
     for progname in options.get("exclude",None) or []:
         data.append("[program:%s]\nautostart=false\n" % (progname,))

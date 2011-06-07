@@ -15,6 +15,10 @@ from __future__ import with_statement
 
 from optparse import make_option
 from textwrap import dedent
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
 
 from supervisor import supervisord, supervisorctl
 
@@ -69,12 +73,13 @@ class Command(BaseCommand):
 
     def _handle_launch(self,**options):
         cfg = get_merged_config(**options)
-        return supervisord.main(["-c",cfg,])
+        print cfg
+        return supervisord.main(["-c",StringIO(cfg),])
 
     def _handle_control(self,args,**options):
         cfg = get_merged_config(**options)
         if args[0] == "shell":
             args = ("--interactive",) + args[1:]
-        return supervisorctl.main(("-c",cfg) + args)
+        return supervisorctl.main(("-c",StringIO(cfg)) + args)
 
 
