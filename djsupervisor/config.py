@@ -2,6 +2,7 @@
 import os
 
 try:
+    raise ImportError
     from cStringIO import StringIO
 except ImportError:
     from StringIO import StringIO
@@ -46,7 +47,7 @@ def find_all_configs():
     
 
 def load_config_from_file(filename,proj,app):
-    with open(filename,"rt") as f:
+    with open(filename,"r") as f:
         data = f.read()
     t = template.Template(data)    
     c = template.Context({
@@ -59,8 +60,11 @@ def load_config_from_file(filename,proj,app):
  
 
 def get_merged_supervisord_config(**options):
-    return StringIO("""
+    data = """
 [supervisord]
 nodaemon=true
-""" + "".join(find_all_configs()))
+"""
+    for cfg in find_all_configs():
+        data +=  cfg
+    return StringIO(data)
 
