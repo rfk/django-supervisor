@@ -56,7 +56,7 @@ def load_config_from_file(filename,proj,app):
         "settings": settings,
         "environ": os.environ,
     })
-    return t.render(c)
+    return t.render(c).encode("ascii")
  
 
 def get_merged_supervisord_config(**options):
