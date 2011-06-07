@@ -60,16 +60,16 @@ Celery task daemon::
     autorestart=true
 
 
-Now when you run :python myproject/manage.py supervisor:, it will detect this
+Now when you run the "supervisor" management command, it will detect this
 file and start the two processes for you.
 
-Notice that the config file is interpreted using Django's template engine.
+Notice that the config file is interpreted using Django's templating engine.
 This lets you do fun things like locate files relative to the project root
 directory.
 
 Better yet, you can make parts of the config conditional based on project
 settings or on the environment.  For example, you might start the development
-server when debugging but run under fcgi in production::
+server when debugging but run under FCGI in production::
 
     [program:webserver]
     {% if settings.DEBUG %}
@@ -113,8 +113,8 @@ file shown in the previous section::
     2011-06-07 23:46:56,512 INFO success: celeryd entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
 
 By default the "supervisor" command will stay in the foreground and print
-status updates to the console.  To run it in the background, pass it the
---daemonize option.
+status updates to the console.  Pass the --daemonize option to have it 
+run in the background.
 
 Once the supervisor is up and running, you can interact with it to control the
 running processes.  Running "manage.py supervisor shell" will launch the
@@ -142,16 +142,17 @@ status, and start/stop individual processes::
     supervisor> 
 
 
-You can also issue individual commands directly on the command-line::
+You can also issue individual process-manangement commands directly on the 
+command-line::
 
     $ python myproject/manage.py supervisor start celeryd
     celeryd: started
     $
-    $ python myproject/manage.py supervisord status
+    $ python myproject/manage.py supervisor status
     celeryd                          RUNNING    pid 4937, uptime 0:00:55
     webserver                        RUNNING    pid 4801, uptime 0:09:05
     $
-    $ python myproject/manage.py supervisord shutdown
+    $ python myproject/manage.py supervisor shutdown
     Shut down
     $
 
