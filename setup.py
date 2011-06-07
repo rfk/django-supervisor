@@ -42,11 +42,14 @@ AUTHOR_EMAIL = "ryan@rfk.id.au"
 URL="http://github.com/rfk/django-supervisor"
 LICENSE = "MIT"
 KEYWORDS = "django supervisord process"
-PACKAGES = ["djsupervisor"]
+PACKAGES = ["djsupervisor","djsupervisor.management",
+            "djsupervisor.management.commands"]
+PACKAGE_DATA = {
+  "djsupervisor": ["contrib/*/supervisord.conf",],
+}
 CLASSIFIERS = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 2",
-    "Programming Language :: Python :: 3",
     "License :: OSI Approved",
     "License :: OSI Approved :: MIT License",
     "Development Status :: 3 - Alpha",
@@ -64,6 +67,7 @@ setup(
   license=LICENSE,
   keywords=KEYWORDS,
   packages=PACKAGES,
+  package_data=PACKAGE_DATA,
   classifiers=CLASSIFIERS,
   install_requires=[
     "supervisor",
