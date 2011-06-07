@@ -23,18 +23,27 @@ stop all these different processes by hand.
 When you're deploying, it's a pain to make sure that each process is hooked
 into the system startup scripts in the correct order.
 
-Django-supervisor makes starting all the processes required by your project
-as simple as::
+Django-supervisor provides a convenient bridge between your Django project
+and the supervisord process control system.  It makes stating all the
+processes required by your project as simple as::
 
     $ python myproject/manage.py supervisor
 
 
-How?
-----
+Configuration
+-------------
 
-To get started, just dump a "supervisord.conf" file in your project directory
-and django-supervisor will pick up on it.  A simple example might run the
-Django development server and the Celery task daemon::
+Django-supervisor uses the same configuration file format as supervisord.
+Basically, you write an ini-style config file where each section defines
+a process to be launched.  Some examples can be found below, but you'll
+want to refer to the supervisord docs for all the finer details:
+
+    http://www.supervisord.org
+
+
+To get started, just include "djsupervisor" in your INSTALLED_APPS and drop
+a "supervisord.conf" file in your project directory.  A simple example
+config might run the Django development server and the Celery task daemon::
 
     [program:webserver]
     command={{ PROJECT_DIR }}/manage.py runserver --noreload
@@ -50,13 +59,13 @@ Django development server and the Celery task daemon::
 Now when you run `python myproject/manage.py supervisor`, it will detect this
 file and start the two processes for you.
 
-Notice the the config file is interpreted using Django's template engine.
+Notice that the config file is interpreted using Django's template engine.
 This lets you do fun things like locate files relative to the project root
 directory.
 
-You can also make parts of the file conditional like so.  For example, you
-might start the development server when debugging but run under fcgi in
-production::
+Better yet, you can make parts of the config conditional based on project
+settings or on the environment.  For example, you might start the development
+server when debugging but run under fcgi in production::
 
     [program:webserver]
     {% if settings.DEBUG %}
@@ -68,17 +77,97 @@ production::
     autorestart=true
  
 
-Django-supervisor also supports per-application configuration files.  For
-example, if you have "djcelery" in your INSTALLED_APPS, it will automatically
-pick up and merge in configuration files from the following directories:
+For more flexibility, django-supervisor also supports per-application config
+files.  For each application in INSTALLED_APPS, it will search for config
+files in the following locations:
 
-   * djcelery/management/supervisord.conf
-   * djsupervisor/contrib/djcelery/supervisord.conf
+   * <app directory>/management/supervisord.conf
+   * djsupervisor/contrib/<app name>/supervisord.conf
+
+Any files so found will be merged together, and then merged with your project
+configuration to produce the final supervisord config.  This allows you to
+include basic process management definitions as part of a reusable Django
+application, and tweak or override them on a per-project basis.
 
 
-This allows you to make the specification of background processes a part of
-your reusable applications, and they will be merged together with your
-project configuration.
+Usage
+-----
+
+Django-supervisor provides a new Django manangement command named "supervise"
+which allows you to control all of the processes belonging to your project.
+
+When run without arguments, it will spawn supervisord to launch and monitor
+all the configured processs.  Here's some example output using the config
+file shown in the previous section::
+
+    $ python myproject/manage.py supervisor
+    2011-06-07 23:46:45,253 INFO RPC interface 'supervisor' initialized
+    2011-06-07 23:46:45,253 INFO supervisord started with pid 4787
+    2011-06-07 23:46:46,258 INFO spawned: 'celeryd' with pid 4799
+    2011-06-07 23:46:46,275 INFO spawned: 'webserver' with pid 4801
+    2011-06-07 23:46:47,456 INFO success: webserver entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+    2011-06-07 23:46:56,512 INFO success: celeryd entered RUNNING state, process has stayed up for > than 10 seconds (startsecs)
+
+By default the "supervisor" command will stay in the foreground and print
+status updates to the console.  To run it in the background, pass it the
+--daemonize option.
+
+Once the supervisor is up and running, you can interact with it to control the
+running processes.  Running "manage.py supervisor shell" will launch the
+interactive supervisorctl command shell.  From here you can view process
+status, and start/stop individual processes::
+
+    $ python myproject/manage.py supervisor shell
+    celeryd                          RUNNING    pid 4799, uptime 0:03:17
+    runserver                        RUNNING    pid 4801, uptime 0:03:17
+    supervisor> 
+    supervisor> help
+
+    default commands (type help <topic>):
+    =====================================
+    add   clear fg       open quit   remove restart  start  stop update 
+    avail exit  maintail pid  reload reread shutdown status tail version
+
+    supervisor> 
+    supervisor> stop celeryd
+    celeryd: stopped
+    supervisor> 
+    supervisor> status
+    celeryd                          STOPPED    Jun 07 11:51 PM
+    runserver                        RUNNING    pid 4801, uptime 0:04:45
+    supervisor> 
+
+
+You can also issue individual commands directly on the command-line::
+
+    $ python myproject/manage.py supervisor start celeryd
+    celeryd: started
+    $
+    $ python myproject/manage.py supervisord status
+    celeryd                          RUNNING    pid 4937, uptime 0:00:55
+    runserver                        RUNNING    pid 4801, uptime 0:09:05
+    $
+    $ python myproject/manage.py supervisord shutdown
+    Shut down
+    $
+
+
+
+Advantages
+----------
+
+Django-supervisor is admittedly quite a thin layer on top of the wonderful
+functionality provided by supervisord.  But by integrating tightly with
+Django's management scripts you gain several advantages:
+
+    * manage.py remains the single point of control for running your project.
+    * Process configuration lives and is managed inside your project directory.
+    * Process configuration can depend on Django settings and environment
+      variables, and have paths relative to your project and/or apps.
+    * Apps can provide default process configurations, which projects can
+      then tweak or override as needed.
+    * Running all those processes is just as easy in development as it
+      is in production.
 
 
 """
