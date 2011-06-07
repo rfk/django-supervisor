@@ -12,7 +12,7 @@ Why?
 ----
 
 Running a Django project these days often entails much more than just starting
-up a webserver.  You might need to have Django running behind FCGI or CherryPy,
+up a webserver.  You might need to have Django running under FCGI or CherryPy,
 with background tasks being managed by celeryd, periodic tasks scheduled by
 celerybeat, and any number of other processes all cooperating to keep the
 project up and running.
@@ -21,10 +21,10 @@ When you're just developing or debugging, it's a pain having to start and
 stop all these different processes by hand.
 
 When you're deploying, it's a pain to make sure that each process is hooked
-into the system startup scripts in the correct order.
+into the system startup scripts with the correct configuration.
 
 Django-supervisor provides a convenient bridge between your Django project
-and the supervisord process control system.  It makes stating all the
+and the supervisord process control system.  It makes starting all the
 processes required by your project as simple as::
 
     $ python myproject/manage.py supervisor
@@ -33,17 +33,21 @@ processes required by your project as simple as::
 Configuration
 -------------
 
-Django-supervisor uses the same configuration file format as supervisord.
-Basically, you write an ini-style config file where each section defines
-a process to be launched.  Some examples can be found below, but you'll
-want to refer to the supervisord docs for all the finer details:
+Django-supervisor is a wrapper around supervisord, so it uses the same
+configuration file format.  Basically, you write an ini-style config file
+where each section defines a process to be launched.  Some examples can be
+found below, but you'll want to refer to the supervisord docs for all the
+finer details:
 
     http://www.supervisord.org
 
 
 To get started, just include "djsupervisor" in your INSTALLED_APPS and drop
-a "supervisord.conf" file in your project directory.  A simple example
-config might run the Django development server and the Celery task daemon::
+a "supervisord.conf" file in your project directory, right next to the main
+manage.py script.
+
+A simple example config might run both the Django development server and the
+Celery task daemon::
 
     [program:webserver]
     command={{ PROJECT_DIR }}/manage.py runserver --noreload
@@ -56,7 +60,7 @@ config might run the Django development server and the Celery task daemon::
     autorestart=true
 
 
-Now when you run `python myproject/manage.py supervisor`, it will detect this
+Now when you run :python myproject/manage.py supervisor:, it will detect this
 file and start the two processes for you.
 
 Notice that the config file is interpreted using Django's template engine.
@@ -119,7 +123,7 @@ status, and start/stop individual processes::
 
     $ python myproject/manage.py supervisor shell
     celeryd                          RUNNING    pid 4799, uptime 0:03:17
-    runserver                        RUNNING    pid 4801, uptime 0:03:17
+    webserver                        RUNNING    pid 4801, uptime 0:03:17
     supervisor> 
     supervisor> help
 
@@ -134,7 +138,7 @@ status, and start/stop individual processes::
     supervisor> 
     supervisor> status
     celeryd                          STOPPED    Jun 07 11:51 PM
-    runserver                        RUNNING    pid 4801, uptime 0:04:45
+    webserver                        RUNNING    pid 4801, uptime 0:04:45
     supervisor> 
 
 
@@ -145,7 +149,7 @@ You can also issue individual commands directly on the command-line::
     $
     $ python myproject/manage.py supervisord status
     celeryd                          RUNNING    pid 4937, uptime 0:00:55
-    runserver                        RUNNING    pid 4801, uptime 0:09:05
+    webserver                        RUNNING    pid 4801, uptime 0:09:05
     $
     $ python myproject/manage.py supervisord shutdown
     Shut down
