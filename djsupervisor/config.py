@@ -6,6 +6,7 @@ try:
 except ImportError:
     from StringIO import StringIO
 
+from django import template
 from django.conf import settings
 from django.utils.importlib import import_module
 
@@ -44,8 +45,17 @@ def find_all_configs():
         yield load_config_from_file(projfile,projmod,appmod)
     
 
-def load_config_from_file(filename,projmod,appmod):
-    return open(filename).read()
+def load_config_from_file(filename,proj,app):
+    with open(filename,"rt") as f:
+        data = f.read()
+    t = template.Template(data)    
+    c = template.Context({
+        "PROJECT_DIR": os.path.dirname(proj.__file__),
+        "APP_DIR": None if app is None else os.path.dirname(app.__file__),
+        "settings": settings,
+        "environ": os.environ,
+    })
+    return t.render(c)
  
 
 def get_merged_supervisord_config(**options):
