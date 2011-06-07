@@ -24,9 +24,9 @@ When you're deploying, it's a pain to make sure that each process is hooked
 into the system startup scripts in the correct order.
 
 Django-supervisor makes starting all the processes required by your project
-as simple as:
+as simple as::
 
-    python myproject/manage.py supervisor
+    $ python myproject/manage.py supervisor
 
 
 How?
@@ -46,6 +46,9 @@ Django development server and the Celery task daemon::
     autostart=true
     autorestart=true
 
+
+Now when you run `python myproject/manage.py supervisor`, it will detect this
+file and start the two processes for you.
 
 Notice the the config file is interpreted using Django's template engine.
 This lets you do fun things like locate files relative to the project root
@@ -67,14 +70,15 @@ production::
 
 Django-supervisor also supports per-application configuration files.  For
 example, if you have "djcelery" in your INSTALLED_APPS, it will automatically
-pick up configuration files from the following directories:
+pick up and merge in configuration files from the following directories:
 
     djcelery/management/supervisord.conf
     djsupervisor/contrib/djcelery/supervisord.conf
 
 
 This allows you to make the specification of background processes a part of
-your reusable application.
+your reusable applications, and they will be merged together with your
+project configuration.
 
 
 """

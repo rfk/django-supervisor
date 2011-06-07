@@ -1,7 +1,7 @@
 """
 
-djsupervisor.tests:  testcases for the djsupervisor module.
------------------------------------------------------------
+djsupervisor.tests:  testcases for djsupervisor
+-----------------------------------------------
 
 These are just some simple tests for the moment, more to come...
 
