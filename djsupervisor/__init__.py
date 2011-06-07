@@ -36,7 +36,7 @@ To get started, just dump a "supervisord.conf" file in your project directory
 and django-supervisor will pick up on it.  A simple example might run the
 Django development server and the Celery task daemon::
 
-    [program:wsgiserver]
+    [program:webserver]
     command={{ PROJECT_DIR }}/manage.py runserver --noreload
     autostart=true
     autorestart=true
@@ -58,7 +58,7 @@ You can also make parts of the file conditional like so.  For example, you
 might start the development server when debugging but run under fcgi in
 production::
 
-    [program:wsgiserver]
+    [program:webserver]
     {% if settings.DEBUG %}
     command={{ PROJECT_DIR }}/manage.py runserver
     {% else %}
@@ -72,8 +72,8 @@ Django-supervisor also supports per-application configuration files.  For
 example, if you have "djcelery" in your INSTALLED_APPS, it will automatically
 pick up and merge in configuration files from the following directories:
 
-    djcelery/management/supervisord.conf
-    djsupervisor/contrib/djcelery/supervisord.conf
+   * djcelery/management/supervisord.conf
+   * djsupervisor/contrib/djcelery/supervisord.conf
 
 
 This allows you to make the specification of background processes a part of
