@@ -1,0 +1,10 @@
+*.pyc
+*.pyo
+*~
+*.swp
+build/
+dist/
+.coverage
+cover
+.tox
+MANIFEST
