@@ -64,22 +64,20 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
+        #  We basically just consruct the supervisord.conf file and 
+        #  forwards it on to either supervisord or supervisorctl.
+        cfg = get_merged_config(**options)
+        #  Due to some very nice engineering on behalf of supervisord authors,
+        #  you can pass it a StringIO instance for the "-c" command-line
+        #  option.  Saves us having to write the config to a tempfile.
+        cfg_file = StringIO(cfg)
         #  With no arguments, we launch the processes under supervisord.
         #  With arguments, we pass them on to supervisorctl.
         if not args:
-            return self._handle_launch(**options)
+            return supervisord.main(("-c",cfg_file))
         else:
-            return self._handle_control(args,**options)
-
-    def _handle_launch(self,**options):
-        cfg = get_merged_config(**options)
-        print cfg
-        return supervisord.main(["-c",StringIO(cfg),])
-
-    def _handle_control(self,args,**options):
-        cfg = get_merged_config(**options)
-        if args[0] == "shell":
-            args = ("--interactive",) + args[1:]
-        return supervisorctl.main(("-c",StringIO(cfg)) + args)
+            if args[0] == "shell":
+                args = ("--interactive",) + args[1:]
+            return supervisorctl.main(("-c",cfg_file) + args)
 
 
