@@ -8,8 +8,8 @@ Django-supervisor combines the process-managment awesomness of supervisord
 with the convenience of Django's management scripts.
 
 
-Why?
-----
+Rationale
+---------
 
 Running a Django project these days often entails much more than just starting
 up a webserver.  You might need to have Django running under FCGI or CherryPy,
@@ -176,5 +176,8 @@ command-line::
     Shut down
     $
 
+
+For details of all the available management commands, consult the supervisord
+documentation.
 
 
