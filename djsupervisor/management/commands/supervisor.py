@@ -45,7 +45,7 @@ class Command(BaseCommand):
            Manage processes with supervisord.
 
            With no arguments, this spawns the configured background processes.
-           With a command argument it allows control the running processes.
+           With a command argument it lets you control the running processes.
            Available commands include:
 
                supervisor shell
