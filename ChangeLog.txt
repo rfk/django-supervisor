@@ -1,4 +1,9 @@
 
+v0.1.2:
+
+  * add "dumpconfig" command, to print the final merged config to stdout.
+
+
 v0.1.1:
 
   * In debug mode, provide an "autorestart" process that watches your code
@@ -11,6 +16,7 @@ v0.1.1:
   * app-specific config files:  use only one of management/supervisord.conf
     or contrib/<appname>/supervisord.conf, never both.  This prevent us
     from accidentally conflicting with settings specified by app authors.
+
 
 v0.1.0:
 

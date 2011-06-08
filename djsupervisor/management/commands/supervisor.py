@@ -11,6 +11,8 @@ of the proceses defined in your Django project.
 The "supervisor" command suports three modes of operation:
 
     * called without arguments, it launches supervisord to spawn processes.
+    * called with the single argument "dumpconfig", is prints the merged
+      supervisord config to stdout.
     * called with the single argument "autorestart", it watches for changes
       to python modules and restarts all processes if things change.
     * called with any other arguments, it passes them on the supervisorctl.
@@ -82,10 +84,14 @@ class Command(BaseCommand):
         #  option.  Saves us having to write the config to a tempfile.
         cfg_file = StringIO(cfg)
         #  With no arguments, we launch the processes under supervisord.
+        #  With argument "dumpconfig" we dump config to stdout.
         #  With argument "autorestart" we run the auto-restarter.
         #  With any other arguments, we pass them on to supervisorctl.
         if not args:
             return supervisord.main(("-c",cfg_file))
+        elif args[0] == "dumpconfig":
+            print cfg
+            return 0
         elif args[0] == "autorestart":
             return self._handle_autorestart(*args[1:],**options)
         else:
