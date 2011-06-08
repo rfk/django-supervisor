@@ -245,7 +245,7 @@ the Django development server, but works across all configured processes.
 For example, this will let you automatically restart both the dev server and
 celeryd whenever your code changes.
 
-To switch off the autorestart process, just exclude it in our project config
+To switch off the autorestart process, just exclude it in your project config
 file like so::
 
     [program:autorestart]
