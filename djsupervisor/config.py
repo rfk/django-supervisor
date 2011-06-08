@@ -209,11 +209,19 @@ def set_if_missing(cfg,section,option,value):
 
 
 #  These are the default configuration options provided by djsupervisor.
-#  We provide a default command "runserver" which runs the dev server.
+#
 DEFAULT_CONFIG = """
 
+;  We always provide the 'runserver' process to run the dev server.
 [program:runserver]
 command={{ PROJECT_DIR }}/manage.py runserver --noreload
+
+;  In debug mode, we watch for changes in the project directory and inside
+;  any installed apps.  When something changes, restart all processes.
+{% if settings.DEBUG %}
+[program:autorestart]
+command={{ PROJECT_DIR }}/manage.py supervisor autorestart
+{% endif %}
 
 """
 
