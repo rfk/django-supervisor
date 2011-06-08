@@ -40,8 +40,7 @@ Django's management scripts you gain several advantages:
     * manage.py remains the single point of control for running your project.
     * Running all those processes is just as easy in development as it
       is in production.
-    * Auto-reloading for *all* processes when running in debug mode.
-    * Process configuration is managed inside your project directory.
+    * You get auto-reloading for *all* processes when running in debug mode.
     * Process configuration can depend on Django settings and environment
       variables, and have paths relative to your project and/or apps.
     * Apps can provide default process configurations, which projects can
@@ -70,13 +69,9 @@ Celery task daemon::
 
     [program:webserver]
     command={{ PROJECT_DIR }}/manage.py runserver --noreload
-    autostart=true
-    autorestart=true
  
     [program:celeryd]
     command={{ PROJECT_DIR }}/manage.py celeryd -l info
-    autostart=true
-    autorestart=true
 
 
 Now when you run the "supervisor" management command, it will detect this
@@ -96,8 +91,6 @@ server when debugging but run under FCGI in production::
     {% else %}
     command={{ PROJECT_DIR }}/manage.py runfcgi host=127.0.0.1 port=8025
     {% endif %}
-    autostart=true
-    autorestart=true
  
 
 For more flexibility, django-supervisor also supports per-application config
