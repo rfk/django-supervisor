@@ -30,6 +30,25 @@ processes required by your project as simple as::
     $ python myproject/manage.py supervisor
 
 
+Advantages
+----------
+
+Django-supervisor is admittedly quite a thin layer on top of the wonderful
+functionality provided by supervisord.  But by integrating tightly with
+Django's management scripts you gain several advantages:
+
+    * manage.py remains the single point of control for running your project.
+    * Running all those processes is just as easy in development as it
+      is in production.
+    * Auto-reloading for *all* processes when running in debug mode.
+    * Process configuration is managed inside your project directory.
+    * Process configuration can depend on Django settings and environment
+      variables, and have paths relative to your project and/or apps.
+    * Apps can provide default process configurations, which projects can
+      then tweak or override as needed.
+
+
+
 Configuration
 -------------
 
@@ -97,7 +116,7 @@ application, and tweak or override them on a per-project basis.
 Usage
 -----
 
-Django-supervisor provides a new Django manangement command named "supervise"
+Django-supervisor provides a new Django manangement command named "supervisor"
 which allows you to control all of the processes belonging to your project.
 
 When run without arguments, it will spawn supervisord to launch and monitor
@@ -114,12 +133,13 @@ file shown in the previous section::
 
 By default the "supervisor" command will stay in the foreground and print
 status updates to the console.  Pass the --daemonize option to have it 
-run in the background.
+run in the background.  You can also tweak its behaviour using all of
+supervisord's standard options in the config file.
 
 Once the supervisor is up and running, you can interact with it to control the
 running processes.  Running "manage.py supervisor shell" will launch the
 interactive supervisorctl command shell.  From here you can view process
-status, and start/stop individual processes::
+status and start/stop/restart individual processes::
 
     $ python myproject/manage.py supervisor shell
     celeryd                          RUNNING    pid 4799, uptime 0:03:17
@@ -156,22 +176,5 @@ command-line::
     Shut down
     $
 
-
-
-Advantages
-----------
-
-Django-supervisor is admittedly quite a thin layer on top of the wonderful
-functionality provided by supervisord.  But by integrating tightly with
-Django's management scripts you gain several advantages:
-
-    * manage.py remains the single point of control for running your project.
-    * Process configuration lives and is managed inside your project directory.
-    * Process configuration can depend on Django settings and environment
-      variables, and have paths relative to your project and/or apps.
-    * Apps can provide default process configurations, which projects can
-      then tweak or override as needed.
-    * Running all those processes is just as easy in development as it
-      is in production.
 
 
