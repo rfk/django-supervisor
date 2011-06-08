@@ -25,12 +25,15 @@ from django.conf import settings
 from django.utils.importlib import import_module
  
 
+CONFIG_FILE_NAME = "supervisord.conf"
+
+
 def get_merged_config(**options):
     """Get the final merged configuration for supvervisord, as a string.
 
     This is the top-level function exported by this module.  It collects
     the various config files from installed applications and the main project,
-    combines them together based on prioerity, and returns the resulting
+    combines them together based on priority, and returns the resulting
     configuration as a string.
     """
     #  Find and load the containing project module.
@@ -132,22 +135,33 @@ def find_app_configs(projmod):
     This function searches for supervisord config files within each of the
     installed apps, in the order they are listed in INSTALLED_APPS.  Each
     file found is rendered and the resulting contents yielded as a string.
+
+    If the app ships with a management/supervisord.conf file, then that file
+    is used.  Otherwise, we look for one under the djsupervisor "contrib"
+    directory.  Only one of the two files is used, to prevent us from 
+    clobbering settings specified by app authors.
     """
     contrib_dir = os.path.join(os.path.dirname(__file__),"contrib")
     for appname in settings.INSTALLED_APPS:
-        #  Look inside the djsupervisor contrib directory
-        appfile = os.path.join(contrib_dir,appname.replace(".",os.sep))
-        appfile = os.path.join(appfile,"supervisord.conf")
-        if os.path.isfile(appfile):
-            with open(appfile,"r") as f:
-                yield render_config(f.read(),projmod,appmod)
-        #  Look inside app managmenet directory
+        appfile = None
+        #  Look first in the application directory.
         appmod = import_module(appname)
-        if not hasattr(appmod,"__file__"):
-            continue
-        appfile = os.path.join(os.path.dirname(appmod.__file__),"management")
-        appfile = os.path.join(appfile,"supervisord.conf")
-        if os.path.isfile(appfile):
+        try:
+            appdir = os.path.dirname(appmod.__file__)
+        except AttributeError:
+            pass
+        else:
+            appfile = os.path.join(appdir,"management",CONFIG_FILE_NAME)
+            if not os.path.isfile(appfile):
+                appfile = None
+        #  If that didn't work, try the djsupervisor contrib directory
+        if appfile is None:
+            appdir = os.path.join(contrib_dir,appname.replace(".",os.sep))
+            appfile = os.path.join(appdir,CONFIG_FILE_NAME)
+            if not os.path.isfile(appfile):
+                appfile = None
+        #  If we found one, render and yield it.
+        if appfile is not None:
             with open(appfile,"r") as f:
                 yield render_config(f.read(),projmod,appmod)
 

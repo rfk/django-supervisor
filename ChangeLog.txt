@@ -1,4 +1,10 @@
 
+v0.1.1:
+
+  * app-specific config files: use only one of management/supervisord.conf
+    or contrib/<appname>/supervisord.conf, never both.  This prevent us
+    from accidentally conflicting with settings specified by app authors.
+
 v0.1.0:
 
   * initial release; you might say *everything* has changed.
