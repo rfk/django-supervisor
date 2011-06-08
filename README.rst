@@ -255,7 +255,7 @@ file like so::
 More Info
 ---------
 
-There aren't any more docs online yet.  I'm working on a little tutorial
+There aren't any more docs online yet.  Sorry.  I'm working on a little tutorial
 and some examples, but I need to actually *use* the project a little more
 first to make sure it all fits together the way I want...
 
