@@ -62,6 +62,13 @@ def get_merged_config(**options):
         with open(projcfg,"r") as f:
             data = render_config(f.read(),projmod)
         cfg.readfp(StringIO(data))
+    #  Remove any [program:] sections with exclude=true
+    for section in cfg.sections():
+        try:
+            if cfg.getboolean(section,"exclude"):
+                cfg.remove_section(section)
+        except NoOptionError:
+            pass
     #  Add options from [program:__defaults__] to each program section
     #  if it happens to be missing that option.
     PROG_DEFAULTS = "program:__defaults__"
