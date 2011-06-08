@@ -1,7 +1,10 @@
 
 v0.1.1:
 
-  * app-specific config files: use only one of management/supervisord.conf
+  * project-specific config:  allow a [program:__overrides__] section to
+    override options in all program sections at once.  Useful for things
+    like globally switching autostart on/off.
+  * app-specific config files:  use only one of management/supervisord.conf
     or contrib/<appname>/supervisord.conf, never both.  This prevent us
     from accidentally conflicting with settings specified by app authors.
 

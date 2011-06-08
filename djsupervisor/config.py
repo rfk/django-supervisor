@@ -45,30 +45,44 @@ def get_merged_config(**options):
     if not os.path.isfile(os.path.join(projdir,"manage.py")):
         msg = "Project %s doesn't have a ./manage.py" % (projname,)
         raise RuntimeError(msg)
+    #  Initialise the ConfigParser.
+    #  Fortunately for us, ConfigParser has merge-multiple-config-files
+    #  functionality built into it.  You just read each file in turn, and
+    #  values from later files overwrite values from former.
+    cfg = RawConfigParser()
     #  Start from the default configuration options.
     data = render_config(DEFAULT_CONFIG,projmod)
-    cfg = RawConfigParser()
     cfg.readfp(StringIO(data))
-    #  Add in each app-specific file as we find it.
+    #  Add in each app-specific file in turn.
     for data in find_app_configs(projmod):
         cfg.readfp(StringIO(data))
-    #  And add in the project-specific config file.
-    projcfg = os.path.join(projdir,"supervisord.conf")
+    #  Add in the project-specific config file.
+    projcfg = os.path.join(projdir,CONFIG_FILE_NAME)
     if os.path.isfile(projcfg):
         with open(projcfg,"r") as f:
             data = render_config(f.read(),projmod)
         cfg.readfp(StringIO(data))
     #  Add options from [program:__defaults__] to each program section
     #  if it happens to be missing that option.
-    PROG_DEFAULT = "program:__defaults__"
-    if cfg.has_section(PROG_DEFAULT):
-        for option in cfg.options(PROG_DEFAULT):
-            default = cfg.get(PROG_DEFAULT,option)
+    PROG_DEFAULTS = "program:__defaults__"
+    if cfg.has_section(PROG_DEFAULTS):
+        for option in cfg.options(PROG_DEFAULTS):
+            default = cfg.get(PROG_DEFAULTS,option)
             for section in cfg.sections():
                 if section.startswith("program:"):
                     if not cfg.has_option(section,option):
                         cfg.set(section,option,default)
-        cfg.remove_section(PROG_DEFAULT)
+        cfg.remove_section(PROG_DEFAULTS)
+    #  Add options from [program:__overrides__] to each program section
+    #  regardless of whether they already have that option.
+    PROG_OVERRIDES = "program:__overrides__"
+    if cfg.has_section(PROG_OVERRIDES):
+        for option in cfg.options(PROG_OVERRIDES):
+            override = cfg.get(PROG_OVERRIDES,option)
+            for section in cfg.sections():
+                if section.startswith("program:"):
+                    cfg.set(section,option,override)
+        cfg.remove_section(PROG_OVERRIDES)
     #  Add in the options specified on the command-line.
     cfg.readfp(StringIO(get_config_from_options(**options)))
     #  Make sure we've got a port configured for supervisorctl to
@@ -82,6 +96,9 @@ def get_merged_config(**options):
         set_if_missing(cfg,"unix_http_server","password",password)
         serverurl = "unix://" + cfg.get("unix_http_server","file")
     else:
+        #  This picks a "random" port in the 9000 range to listen on.
+        #  It's derived from the secret key, so it's stable for a given
+        #  project but multiple projects are unlikely to collide.
         port = int(hashlib.md5(password).hexdigest()[:3],16) % 1000
         addr = "127.0.0.1:9%03d" % (port,)
         set_if_missing(cfg,"inet_http_server","port",addr)
