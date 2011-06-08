@@ -181,3 +181,88 @@ For details of all the available management commands, consult the supervisord
 documentation.
 
 
+Extra Goodies
+-------------
+
+Django-supervisor provides some extra niceties on top of the configuration
+language of supervisord.
+
+
+Templating
+~~~~~~~~~~
+
+All supervisord.conf files are rendered through Django's templating system.
+This allows you to interpolate values from the settings or environment, and
+conditionally switch processes on or off.  The template context for each
+configuration file contains the following variables:
+
+    :PROJECT_DIR:    the top-level directory of your project (i.e. the
+                     directory containing your manage.py script).
+
+    :APP_DIR:        for app-provided config files, the top-level directory
+                     containing the application code.
+
+    :settings:       the Django settings module, as seen by your code.
+
+    :environ:        the os.environ dict, as seen by your code.
+
+
+Defaults, Overrides and Excludes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Django-supervisor recognises some special config-file options that are useful
+when merging multiple app-specific and project-specific configuration files.
+
+The [program:__defaults__] section can be used to provide default options
+for all other [program] sections.  These options will only be used if none
+of the config files found by django-supervisor provide that option for
+a specific program.
+
+The [program:__overrides__] section can be used to override options for all
+configured programs.  These options will be applied to all processes regardless
+of what any other config file has to say.
+
+Finally, you can completely disable a [program] section by setting the option
+"exclude" to true.  This is mostly useful for disabling process definitions
+provided by a third-party application.
+
+Here's an example config file that shows them all in action::
+
+    ; We want all programs to redirect stderr by default,
+    ; unless specifically configured otherwise.
+    [program:__defaults__]
+    redirect_stderr=true
+
+    ; We force all programs to run as user "nobody"
+    [program:__overrides__]
+    user=nobody
+
+    ; Django-supervisord ships with a default configuration for celerybeat.
+    ; We don't use it, so remove it from the config.
+    [program:celerybeat]
+    exclude=true
+
+
+Autorestart
+~~~~~~~~~~~
+
+When running in debug mode, django-supervisor automatically defines a process
+named "autorestart".  This is very similar to the auto-reloading feature of
+the Django development server, but works across all configured processes.
+For example, this will let you automatically restart both the dev server and
+celeryd whenever your code changes.
+
+To switch off the autorestart process, just exclude it in our project config
+file like so::
+
+    [program:autorestart]
+    exclude=true
+
+
+More Info
+---------
+
+There aren't any more docs online yet.  I'm working on a little tutorial
+and some examples, but I need to actually *use* the project a little more
+first to make sure it all fits together the way I want...
+
