@@ -77,7 +77,6 @@ class Command(BaseCommand):
         #  We basically just construct the supervisord.conf file and 
         #  forward it on to either supervisord or supervisorctl.
         cfg = get_merged_config(**options)
-        print cfg
         #  Due to some very nice engineering on behalf of supervisord authors,
         #  you can pass it a StringIO instance for the "-c" command-line
         #  option.  Saves us having to write the config to a tempfile.
