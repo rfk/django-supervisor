@@ -73,6 +73,11 @@ class Command(BaseCommand):
             action="append",
             dest="exclude",
             help="don't launch program automatically at supervisor startup"),
+        make_option("--autorestart","-r",
+            action="append",
+            dest="autorestart",
+            help="restart program automatically when code files change in debug mode"
+            " (if this option is not set, all programs will be autorestarted when in debug mode)"),
     )
 
     def handle(self, *args, **options):
@@ -114,12 +119,23 @@ class Command(BaseCommand):
             raise CommandError("supervisord autorestart takes no arguments")
         live_dirs = self._find_live_code_dirs()
         mtimes = {}
+
+        autorestart = options.get("autorestart")
+        if autorestart:
+            # we need to make sure that we autorestart the autorestart command
+            # because it exits when it's performed an autorestart!
+            if "autorestart" not in autorestart:
+                autorestart.append("autorestart")
+        else:
+            autorestart = ["all"]
+        autorestart = " ".join(autorestart)
+
         while True:
             if self._code_has_changed(live_dirs,mtimes):
                 #  Fork a subprocess to make the restart call.
                 #  Otherwise supervisord might kill us and cancel the restart!
                 if os.fork() == 0:
-                    self.handle("restart","all",**options)
+                    self.handle("restart",autorestart,**options)
                 return 0
             time.sleep(1)
 

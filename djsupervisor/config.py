@@ -51,7 +51,13 @@ def get_merged_config(**options):
     #  values from later files overwrite values from former.
     cfg = RawConfigParser()
     #  Start from the default configuration options.
-    data = render_config(DEFAULT_CONFIG,projmod)
+    data = render_config(DEFAULT_CONFIG,projmod,
+                         extra_ctx={
+            'autorestart': " ".join(
+                "--autorestart=%s" % prog for prog in
+                options.get("autorestart") or ["all"])
+            })
+
     cfg.readfp(StringIO(data))
     #  Add in each app-specific file in turn.
     for data in find_app_configs(projmod):
@@ -130,12 +136,13 @@ def get_merged_config(**options):
     return s.getvalue()
 
 
-def render_config(data,proj,app=None):
+def render_config(data,proj,app=None,extra_ctx={}):
     """Render the given config data using Django's template system.
 
     This function takes a config data string, project module, and optional
     app module, and loads the config data by rendering with Django's template
-    system.  The template context will get the following variables:
+    system.  Extra context variables can be passed with the extra_ctx argument.
+    The template context will get the following variables:
 
         PROJECT_DIR:  directory containing the main Django project
         APP_DIR:      directory containing the specific app, if given
@@ -144,12 +151,14 @@ def render_config(data,proj,app=None):
 
     """
     t = template.Template(data)
-    c = template.Context({
+    extra_ctx = dict(extra_ctx)
+    extra_ctx.update({
         "PROJECT_DIR": os.path.dirname(proj.__file__),
         "APP_DIR": None if app is None else os.path.dirname(app.__file__),
         "settings": settings,
         "environ": os.environ,
-    })
+        })
+    c = template.Context(extra_ctx)
     return t.render(c).encode("ascii")
 
 
@@ -227,7 +236,7 @@ command={{ PROJECT_DIR }}/manage.py runserver --noreload
 ;  any installed apps.  When something changes, restart all processes.
 {% if settings.DEBUG %}
 [program:autorestart]
-command={{ PROJECT_DIR }}/manage.py supervisor autorestart
+command={{ PROJECT_DIR }}/manage.py supervisor autorestart {{autorestart}}
 {% endif %}
 
 """
