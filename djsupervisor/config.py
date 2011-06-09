@@ -216,9 +216,13 @@ def get_config_from_options(**options):
     #  When this option is specified, the default for all other
     #  programs becomes autoreload=false.
     if options.get("autoreload",None):
+        data.append("[program:autoreload]\nexclude=false\nautostart=true\n")
         data.append("[program:__defaults__]\nautoreload=false\n")
         for progname in options["autoreload"]:
             data.append("[program:%s]\nautoreload=true\n" % (progname,))
+    #  Set whether to use the autoreloader at all.
+    if options.get("noreload",False):
+        data.append("[program:autoreload]\nexclude=true\n")
     return "".join(data)
 
 
@@ -264,10 +268,11 @@ command={{ PROJECT_DIR }}/manage.py runserver --noreload
 
 ;  In debug mode, we watch for changes in the project directory and inside
 ;  any installed apps.  When something changes, restart all processes.
-{% if settings.DEBUG %}
 [program:autoreload]
 command={{ PROJECT_DIR }}/manage.py supervisor {{ SUPERVISOR_OPTIONS }} autoreload
 autoreload=true
+{% if not settings.DEBUG %}
+exclude=true
 {% endif %}
 
 ;  All programs are auto-reloaded by default.

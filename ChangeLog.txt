@@ -8,9 +8,10 @@ v0.2.0:
       -x/--exclude   =>  entirely remove program from the config
       -i/--include   =>  keep program from the config
   * Rename "autorestart" to "autoreload" since the former is an existing
-    supervisord option that means something very different.
-  * Allow selecting a subset of processes to auto-relod, via config file
-    or command-line switch.
+    supervisord option that means something very different.  Also:
+        * Allow selecting a subset of processes to auto-relod, via config file
+          or command-line switch.
+        * Add --noreload command-line switch to disable the autoreloader
   * Add a contrib supervisord.conf for django-ztask.
   * Add "getconfig" command, to print the final merged config to stdout.
 

@@ -257,8 +257,8 @@ option to false::
     [program:non-python-related]
     autoreload=false
 
-To switch off the autoreload process entirely, just exclude it in your project
-config file like so::
+To switch off the autoreload process entirely, you can pass the --noreload 
+option to supervisor or just exclude it in your project config file like so::
 
     [program:autoreload]
     exclude=true

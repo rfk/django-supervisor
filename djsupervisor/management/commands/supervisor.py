@@ -93,7 +93,13 @@ class Command(BaseCommand):
             dest="include",
             help="don't exclude program from supervisor config"
         ),
+        make_option("--noreload",
+            action="store_true",
+            dest="noreload",
+            help="don't restart processes when code files change"
+        ),
         make_option("--autoreload","-r",
+            metavar="PROG",
             action="append",
             dest="autoreload",
             help="restart program automatically when code files change"
