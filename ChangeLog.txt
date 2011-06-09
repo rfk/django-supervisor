@@ -1,11 +1,17 @@
 
 v0.1.2:
 
-  * rename "autorestart" to "autoreload" since the former is an existing
+  * More flexibility in selecting programs via command-line options.  You
+    can now override both the "autostart" and "exclude" options:
+      -l/--launch    =>  launch program automatically on startup
+      -n/--nolaunch  =>  don't launch automatically, but keep in config
+      -x/--exclude   =>  entirely remove program from the config
+      -i/--include   =>  keep program from the config
+  * Rename "autorestart" to "autoreload" since the former is an existing
     supervisord option that means something very different.
-  * allow selecting a subset of processes to auto-relod, via config file
+  * Allow selecting a subset of processes to auto-relod, via config file
     or command-line switch.
-  * add "getconfig" command, to print the final merged config to stdout.
+  * Add "getconfig" command, to print the final merged config to stdout.
 
 
 v0.1.1:
@@ -24,5 +30,5 @@ v0.1.1:
 
 v0.1.0:
 
-  * initial release; you might say *everything* has changed.
+  * Initial release; you might say *everything* has changed.
 

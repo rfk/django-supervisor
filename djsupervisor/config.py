@@ -205,8 +205,13 @@ def get_config_from_options(**options):
     #  Set which programs to launch automatically on startup.
     for progname in options.get("launch",None) or []:
         data.append("[program:%s]\nautostart=true\n" % (progname,))
-    for progname in options.get("exclude",None) or []:
+    for progname in options.get("nolaunch",None) or []:
         data.append("[program:%s]\nautostart=false\n" % (progname,))
+    #  Set which programs to include/exclude from the config
+    for progname in options.get("include",None) or []:
+        data.append("[program:%s]\nexclude=false\n" % (progname,))
+    for progname in options.get("exclude",None) or []:
+        data.append("[program:%s]\nexclude=true\n" % (progname,))
     #  Set which programs to autoreload when code changes.
     #  When this option is specified, the default for all other
     #  programs becomes autoreload=false.

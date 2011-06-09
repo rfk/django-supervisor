@@ -75,11 +75,23 @@ class Command(BaseCommand):
             dest="launch",
             help="launch program automatically at supervisor startup"
         ),
+        make_option("--nolaunch","-n",
+            metavar="PROG",
+            action="append",
+            dest="nolaunch",
+            help="don't launch program automatically at supervisor startup"
+        ),
         make_option("--exclude","-x",
             metavar="PROG",
             action="append",
             dest="exclude",
-            help="don't launch program automatically at supervisor startup"
+            help="exclude program from supervisor config"
+        ),
+        make_option("--include","-i",
+            metavar="PROG",
+            action="append",
+            dest="include",
+            help="don't exclude program from supervisor config"
         ),
         make_option("--autoreload","-r",
             action="append",
