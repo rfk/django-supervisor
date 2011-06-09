@@ -195,6 +195,8 @@ configuration file contains the following variables:
     :APP_DIR:              for app-provided config files, the top-level
                            directory containing the application code.
 
+    :PYTHON:               full path to the current python interpreter.
+
     :SUPERVISOR_OPTIONS:   the command-line options passed to manage.py. 
  
     :settings:             the Django settings module, as seen by your code.

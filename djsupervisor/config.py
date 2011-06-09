@@ -10,6 +10,7 @@ and producing a final config file to control supervisord/supervisorctl.
 
 """
 
+import sys
 import os
 import hashlib
 
@@ -49,6 +50,7 @@ def get_merged_config(**options):
     #  This is mostly useful information about the project and environment.
     ctx = {
         "PROJECT_DIR": projdir,
+        "PYTHON": os.path.realpath(os.path.abspath(sys.executable)),
         "SUPERVISOR_OPTIONS": rerender_options(options),
         "settings": settings,
         "environ": os.environ,

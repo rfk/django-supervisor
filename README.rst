@@ -189,15 +189,20 @@ This allows you to interpolate values from the settings or environment, and
 conditionally switch processes on or off.  The template context for each
 configuration file contains the following variables:
 
-    :PROJECT_DIR:    the top-level directory of your project (i.e. the
-                     directory containing your manage.py script).
+    :PROJECT_DIR:          the top-level directory of your project (i.e. the
+                           directory containing your manage.py script).
 
-    :APP_DIR:        for app-provided config files, the top-level directory
-                     containing the application code.
+    :APP_DIR:              for app-provided config files, the top-level
+                           directory containing the application code.
 
-    :settings:       the Django settings module, as seen by your code.
+    :PYTHON:               full path to the current python interpreter.
 
-    :environ:        the os.environ dict, as seen by your code.
+    :SUPERVISOR_OPTIONS:   the command-line options passed to manage.py. 
+ 
+    :settings:             the Django settings module, as seen by your code.
+
+    :environ:              the os.environ dict, as seen by your code.
+
 
 
 Defaults, Overrides and Excludes
@@ -236,8 +241,9 @@ Here's an example config file that shows them all in action::
     exclude=true
 
 
-Autorestart
-~~~~~~~~~~~
+
+Autoreload
+~~~~~~~~~~
 
 When running in debug mode, django-supervisor automatically defines a process
 named "autoreload".  This is very similar to the auto-reloading feature of
