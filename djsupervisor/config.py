@@ -74,13 +74,6 @@ def get_merged_config(**options):
         cfg.readfp(StringIO(data))
     #  Add in the options specified on the command-line.
     cfg.readfp(StringIO(get_config_from_options(**options)))
-    #  Remove any [program:] sections with exclude=true
-    for section in cfg.sections():
-        try:
-            if cfg.getboolean(section,"exclude"):
-                cfg.remove_section(section)
-        except NoOptionError:
-            pass
     #  Add options from [program:__defaults__] to each program section
     #  if it happens to be missing that option.
     PROG_DEFAULTS = "program:__defaults__"
@@ -128,6 +121,13 @@ def get_merged_config(**options):
     set_if_missing(cfg,"rpcinterface:supervisor",
                        "supervisor.rpcinterface_factory",
                        "supervisor.rpcinterface:make_main_rpcinterface")
+    #  Remove any [program:] sections with exclude=true
+    for section in cfg.sections():
+        try:
+            if cfg.getboolean(section,"exclude"):
+                cfg.remove_section(section)
+        except NoOptionError:
+            pass
     #  Sanity-check to give better error messages.
     for section in cfg.sections():
         if section.startswith("program:"):
