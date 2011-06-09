@@ -1,5 +1,5 @@
 
-v0.1.2:
+v0.2.0:
 
   * More flexibility in selecting programs via command-line options.  You
     can now override both the "autostart" and "exclude" options:
