@@ -45,29 +45,33 @@ def get_merged_config(**options):
     if not os.path.isfile(os.path.join(projdir,"manage.py")):
         msg = "Project %s doesn't have a ./manage.py" % (projname,)
         raise RuntimeError(msg)
+    #  Build the default template context variables.
+    #  This is mostly useful information about the project and environment.
+    ctx = {
+        "PROJECT_DIR": projdir,
+        "SUPERVISOR_OPTIONS": rerender_options(options),
+        "settings": settings,
+        "environ": os.environ,
+    }
     #  Initialise the ConfigParser.
     #  Fortunately for us, ConfigParser has merge-multiple-config-files
     #  functionality built into it.  You just read each file in turn, and
     #  values from later files overwrite values from former.
     cfg = RawConfigParser()
     #  Start from the default configuration options.
-    data = render_config(DEFAULT_CONFIG,projmod,
-                         extra_ctx={
-            'autorestart': " ".join(
-                "--autorestart=%s" % prog for prog in
-                options.get("autorestart") or ["all"])
-            })
-
+    data = render_config(DEFAULT_CONFIG,ctx)
     cfg.readfp(StringIO(data))
     #  Add in each app-specific file in turn.
-    for data in find_app_configs(projmod):
+    for data in find_app_configs(ctx,projmod):
         cfg.readfp(StringIO(data))
     #  Add in the project-specific config file.
     projcfg = os.path.join(projdir,CONFIG_FILE_NAME)
     if os.path.isfile(projcfg):
         with open(projcfg,"r") as f:
-            data = render_config(f.read(),projmod)
+            data = render_config(f.read(),ctx)
         cfg.readfp(StringIO(data))
+    #  Add in the options specified on the command-line.
+    cfg.readfp(StringIO(get_config_from_options(**options)))
     #  Remove any [program:] sections with exclude=true
     for section in cfg.sections():
         try:
@@ -96,8 +100,6 @@ def get_merged_config(**options):
                 if section.startswith("program:"):
                     cfg.set(section,option,override)
         cfg.remove_section(PROG_OVERRIDES)
-    #  Add in the options specified on the command-line.
-    cfg.readfp(StringIO(get_config_from_options(**options)))
     #  Make sure we've got a port configured for supervisorctl to
     #  talk to supervisord.  It's passworded based on secret key.
     #  If they have configured a unix socket then use that, otherwise
@@ -136,33 +138,18 @@ def get_merged_config(**options):
     return s.getvalue()
 
 
-def render_config(data,proj,app=None,extra_ctx={}):
+def render_config(data,ctx):
     """Render the given config data using Django's template system.
 
-    This function takes a config data string, project module, and optional
-    app module, and loads the config data by rendering with Django's template
-    system.  Extra context variables can be passed with the extra_ctx argument.
-    The template context will get the following variables:
-
-        PROJECT_DIR:  directory containing the main Django project
-        APP_DIR:      directory containing the specific app, if given
-        settings:     the Django settings module
-        environ:      the os.environ dict 
-
+    This function takes a config data string and a dict of context variables,
+    renders the data through Django's template system, and returns the result.
     """
     t = template.Template(data)
-    extra_ctx = dict(extra_ctx)
-    extra_ctx.update({
-        "PROJECT_DIR": os.path.dirname(proj.__file__),
-        "APP_DIR": None if app is None else os.path.dirname(app.__file__),
-        "settings": settings,
-        "environ": os.environ,
-        })
-    c = template.Context(extra_ctx)
+    c = template.Context(ctx)
     return t.render(c).encode("ascii")
 
 
-def find_app_configs(projmod):
+def find_app_configs(ctx,projmod):
     """Generator yielding app-provided config file data.
 
     This function searches for supervisord config files within each of the
@@ -195,21 +182,36 @@ def find_app_configs(projmod):
                 appfile = None
         #  If we found one, render and yield it.
         if appfile is not None:
+            #  Add extra context info about the application.
+            app_ctx = {
+                "APP_DIR": os.path.dirname(appmod.__file__),
+            }
+            app_ctx.update(ctx)
             with open(appfile,"r") as f:
-                yield render_config(f.read(),projmod,appmod)
+                yield render_config(f.read(),app_ctx)
 
 
 def get_config_from_options(**options):
     """Get config file fragment reflecting command-line options."""
     data = []
+    #  Set whether or not to daemonize.
+    #  Unlike supervisord, our default is to stay in the foreground.
     if options.get("daemonize",False):
         data.append("[supervisord]\nnodaemon=false\n")
     else:
         data.append("[supervisord]\nnodaemon=true\n")
+    #  Set which programs to launch automatically on startup.
     for progname in options.get("launch",None) or []:
         data.append("[program:%s]\nautostart=true\n" % (progname,))
     for progname in options.get("exclude",None) or []:
         data.append("[program:%s]\nautostart=false\n" % (progname,))
+    #  Set which programs to autoreload when code changes.
+    #  When this option is specified, the default for all other
+    #  programs becomes autoreload=false.
+    if options.get("autoreload",None):
+        data.append("[program:__defaults__]\nautoreload=false\n")
+        for progname in options["autoreload"]:
+            data.append("[program:%s]\nautoreload=true\n" % (progname,))
     return "".join(data)
 
 
@@ -224,6 +226,27 @@ def set_if_missing(cfg,section,option,value):
         cfg.set(section,option,value)
 
 
+def rerender_options(options):
+    """Helper function to re-render command-line options.
+
+    This assumes that command-line options use the same name as their
+    key in the options dictionary.
+    """
+    args = []
+    for name,value in options.iteritems():
+        if value is None:
+            pass
+        elif isinstance(value,bool):
+            if value:
+                args.append("--%s" % (name,))
+        elif isinstance(value,list):
+            for item in value:
+                args.append("--%s=%s" % (name,item))
+        else:
+            args.append("--%s=%s" % (name,value))
+    return " ".join(args)
+
+
 #  These are the default configuration options provided by djsupervisor.
 #
 DEFAULT_CONFIG = """
@@ -235,9 +258,14 @@ command={{ PROJECT_DIR }}/manage.py runserver --noreload
 ;  In debug mode, we watch for changes in the project directory and inside
 ;  any installed apps.  When something changes, restart all processes.
 {% if settings.DEBUG %}
-[program:autorestart]
-command={{ PROJECT_DIR }}/manage.py supervisor autorestart {{autorestart}}
+[program:autoreload]
+command={{ PROJECT_DIR }}/manage.py supervisor {{ SUPERVISOR_OPTIONS }} autoreload
+autoreload=true
 {% endif %}
+
+;  All programs are auto-reloaded by default.
+[program:__defaults__]
+autoreload=true
 
 """
 

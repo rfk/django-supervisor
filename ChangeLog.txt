@@ -1,7 +1,11 @@
 
 v0.1.2:
 
-  * add "dumpconfig" command, to print the final merged config to stdout.
+  * rename "autorestart" to "autoreload" since the former is an existing
+    supervisord option that means something very different.
+  * allow selecting a subset of processes to auto-relod, via config file
+    or command-line switch.
+  * add "getconfig" command, to print the final merged config to stdout.
 
 
 v0.1.1:

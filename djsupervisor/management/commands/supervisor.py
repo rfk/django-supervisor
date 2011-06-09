@@ -8,13 +8,16 @@ The "supervisor" command acts like a combination of the supervisord and
 supervisorctl programs, allowing you to start up, shut down and manage all
 of the proceses defined in your Django project.
 
-The "supervisor" command suports three modes of operation:
+The "supervisor" command suports several modes of operation:
 
     * called without arguments, it launches supervisord to spawn processes.
-    * called with the single argument "dumpconfig", is prints the merged
+
+    * called with the single argument "getconfig", is prints the merged
       supervisord config to stdout.
-    * called with the single argument "autorestart", it watches for changes
+
+    * called with the single argument "autoreload", it watches for changes
       to python modules and restarts all processes if things change.
+
     * called with any other arguments, it passes them on the supervisorctl.
 
 """
@@ -27,6 +30,7 @@ import os
 import time
 from optparse import make_option
 from textwrap import dedent
+from ConfigParser import RawConfigParser, NoOptionError
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -47,6 +51,7 @@ class Command(BaseCommand):
            Manage processes with supervisord.
 
            With no arguments, this spawns the configured background processes.
+
            With a command argument it lets you control the running processes.
            Available commands include:
 
@@ -62,85 +67,118 @@ class Command(BaseCommand):
             action="store_true",
             dest="daemonize",
             default=False,
-            help="daemonize before launching subprocessess"),
+            help="daemonize before launching subprocessess"
+        ),
         make_option("--launch","-l",
             metavar="PROG",
             action="append",
             dest="launch",
-            help="launch program automatically at supervisor startup"),
+            help="launch program automatically at supervisor startup"
+        ),
         make_option("--exclude","-x",
             metavar="PROG",
             action="append",
             dest="exclude",
-            help="don't launch program automatically at supervisor startup"),
-        make_option("--autorestart","-r",
+            help="don't launch program automatically at supervisor startup"
+        ),
+        make_option("--autoreload","-r",
             action="append",
-            dest="autorestart",
-            help="restart program automatically when code files change in debug mode"
-            " (if this option is not set, all programs will be autorestarted when in debug mode)"),
+            dest="autoreload",
+            help="restart program automatically when code files change"
+                 " (debug mode only;"
+                 " if not set then all programs are autoreloaded)"
+        ),
     )
 
     def handle(self, *args, **options):
-        #  We basically just construct the supervisord.conf file and 
-        #  forward it on to either supervisord or supervisorctl.
+        #  We basically just construct the merged supervisord.conf file
+        #  and forward it on to either supervisord or supervisorctl.
         cfg = get_merged_config(**options)
         #  Due to some very nice engineering on behalf of supervisord authors,
         #  you can pass it a StringIO instance for the "-c" command-line
         #  option.  Saves us having to write the config to a tempfile.
         cfg_file = StringIO(cfg)
         #  With no arguments, we launch the processes under supervisord.
-        #  With argument "dumpconfig" we dump config to stdout.
-        #  With argument "autorestart" we run the auto-restarter.
-        #  With any other arguments, we pass them on to supervisorctl.
         if not args:
             return supervisord.main(("-c",cfg_file))
-        elif args[0] == "dumpconfig":
-            print cfg
-            return 0
-        elif args[0] == "autorestart":
-            return self._handle_autorestart(*args[1:],**options)
-        else:
-            if args[0] == "shell":
-                args = ("--interactive",) + args[1:]
+        #  With arguments, the first arg specifies the sub-command
+        #  Some commands we implement ourself with _handle_<command>.
+        #  The rest we just pass on to supervisorctl.
+        assert args[0].isalnum()
+        methname = "_handle_%s" % (args[0],)
+        try:
+            method = getattr(self,methname)
+        except AttributeError:
             return supervisorctl.main(("-c",cfg_file) + args)
+        else:
+            return method(cfg_file,*args[1:],**options)
 
-    def _handle_autorestart(self,*args,**options):
-        """Watch python code files, restart processes if they change.
+    #
+    #  The following methods implement custom sub-commands.
+    #
+
+    def _handle_shell(self,cfg_file,*args,**options):
+        """Command 'supervisord shell' runs the interactive command shell."""
+        args = ("--interactive",) + args
+        return supervisorctl.main(("-c",cfg_file) + args)
+
+    def _handle_getconfig(self,cfg_file,*args,**options):
+        """Command 'supervisord getconfig' prints merged config to stdout."""
+        if args:
+            raise CommandError("supervisord getconfig takes no arguments")
+        print cfg_file.getvalue()
+        return 0
+
+    def _handle_autoreload(self,cfg_file,*args,**options):
+        """Command 'supervisord autoreload' watches for code changes.
 
         This command provides a simulation of the Django dev server's
         auto-reloading mechanism that will restart all supervised processes.
 
-        It uses django.util.autoreload under the hood, but it's not quite
-        as accurate since it doesn't know what modules are being loaded
-        by other processes.  Instead, it tries to watch all python files
-        contained in each application directory.
+        It's not quite as accurate as Django's autoreloader because it runs
+        in a separate process, so it doesn't know the precise set of modules
+        that have been loaded. Instead, it tries to watch all python files
+        that are "nearby" the files loaded at startup by Django.
         """
         if args:
-            raise CommandError("supervisord autorestart takes no arguments")
+            raise CommandError("supervisord autoreload takes no arguments")
         live_dirs = self._find_live_code_dirs()
         mtimes = {}
-
-        autorestart = options.get("autorestart")
-        if autorestart:
-            # we need to make sure that we autorestart the autorestart command
-            # because it exits when it's performed an autorestart!
-            if "autorestart" not in autorestart:
-                autorestart.append("autorestart")
-        else:
-            autorestart = ["all"]
-        autorestart = " ".join(autorestart)
-
+        reload_progs = self._get_autoreload_programs(cfg_file)
         while True:
             if self._code_has_changed(live_dirs,mtimes):
                 #  Fork a subprocess to make the restart call.
                 #  Otherwise supervisord might kill us and cancel the restart!
                 if os.fork() == 0:
-                    self.handle("restart",autorestart,**options)
+                    self.handle("restart",*reload_progs,**options)
                 return 0
             time.sleep(1)
 
+    def _get_autoreload_programs(self,cfg_file):
+        """Get the set of programs to auto-reload when code changes.
+
+        Such programs will have autoreload=true in their config section.
+        This can be affected by config file sections or command-line
+        arguments, so we need to read it out of the merged config.
+        """
+        cfg = RawConfigParser()
+        cfg.readfp(cfg_file)
+        reload_progs = []
+        for section in cfg.sections():
+            if section.startswith("program:"):
+                try:
+                    if cfg.getboolean(section,"autoreload"):
+                        reload_progs.append(section.split(":",1)[1])
+                except NoOptionError:
+                    pass
+        return reload_progs
+
     def _code_has_changed(self,live_dirs,mtimes):
-        """Check whether code under the given directories has changed."""
+        """Check whether code under the given directories has changed.
+
+        This is a simple check based on file mtime.  New or deleted files
+        don't count as code changes.
+        """
         for filepath in self._find_live_code_files(live_dirs):
             try:
                 stat = os.stat(filepath)
@@ -153,7 +191,13 @@ class Command(BaseCommand):
                     return True
 
     def _find_live_code_dirs(self):
-        """Find all directories in which we might have live python code."""
+        """Find all directories in which we might have live python code.
+
+        This walks all of the currently-imported modules and adds their
+        containing directory to the list of live dirs.  After normalization
+        and de-duplication, we get a pretty good approximation of the 
+        directories on sys.path that are actively in use.
+        """
         live_dirs = []
         for mod in sys.modules.values():
             #  Get the directory containing that module.

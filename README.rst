@@ -240,15 +240,21 @@ Autorestart
 ~~~~~~~~~~~
 
 When running in debug mode, django-supervisor automatically defines a process
-named "autorestart".  This is very similar to the auto-reloading feature of
+named "autoreload".  This is very similar to the auto-reloading feature of
 the Django development server, but works across all configured processes.
 For example, this will let you automatically restart both the dev server and
 celeryd whenever your code changes.
 
-To switch off the autorestart process, just exclude it in your project config
-file like so::
+To prevent an individual program from being auto-reloaded, set its "autoreload"
+option to false::
 
-    [program:autorestart]
+    [program:non-python-related]
+    autoreload=false
+
+To switch off the autoreload process entirely, just exclude it in your project
+config file like so::
+
+    [program:autoreload]
     exclude=true
 
 
