@@ -242,6 +242,24 @@ Here's an example config file that shows them all in action::
 
 
 
+Automatic Control Socket Config
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The supervisord and supervisorctl programs interact with each other via an
+XML-RPC control socket.  This provides a great deal of flexibility and control
+over security, but you have to configure it just so or things won't work.
+
+For convenience during development, django-supervisor provides automatic
+control socket configuration.  By default it binds the server to localhost
+on a fixed-but-randomish port, and sets up a username and password based on
+settings.SECRET_KEY.
+
+For production deployment, you might like to reconfigure this by setting up
+the [inet_http_server] or [unix_http_server] sections.  Django-supervisor
+will honour any such settings you provide.
+
+
+
 Autoreload
 ~~~~~~~~~~
 
@@ -262,6 +280,7 @@ option to supervisor or just exclude it in your project config file like so::
 
     [program:autoreload]
     exclude=true
+
 
 
 More Info
