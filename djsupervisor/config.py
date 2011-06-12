@@ -99,7 +99,7 @@ def get_merged_config(**options):
     #  talk to supervisord.  It's passworded based on secret key.
     #  If they have configured a unix socket then use that, otherwise
     #  use an inet server on localhost at fixed-but-randomish port.
-    username = hashlib.md5(settings.SECRET_KEY).hexdigest()
+    username = hashlib.md5(settings.SECRET_KEY).hexdigest()[:7]
     password = hashlib.md5(username).hexdigest()
     if cfg.has_section("unix_http_server"):
         set_if_missing(cfg,"unix_http_server","username",username)
