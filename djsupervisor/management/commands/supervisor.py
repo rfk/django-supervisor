@@ -108,6 +108,28 @@ class Command(BaseCommand):
         ),
     )
 
+    def run_from_argv(self,argv):
+        #  Customize option handling so that it doesn't choke on any
+        #  options that are being passed straight on to supervisorctl.
+        #  Basically, we insert "--" before the supervisorctl command.
+        #
+        #  For example, automatically turn this:
+        #      manage.py supervisor -l celeryd tail -f celeryd
+        #  Into this:
+        #      manage.py supervisor -l celeryd -- tail -f celeryd
+        #
+        i = 2
+        while i < len(argv):
+            arg = argv[i]
+            if arg.startswith("--"):
+                i += 1
+            elif arg.startswith("-"):
+                i += 2
+            else:
+                argv = argv[:i] + ["--"] + argv[i:]
+                break
+        return super(Command,self).run_from_argv(argv)
+
     def handle(self, *args, **options):
         #  We basically just construct the merged supervisord.conf file
         #  and forward it on to either supervisord or supervisorctl.
