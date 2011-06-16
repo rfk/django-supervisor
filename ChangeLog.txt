@@ -1,4 +1,12 @@
 
+v0.2.1:
+
+  * Stop manage.py trying to parse options intended for supervisorctl.
+  * Ensure the auto-generated username is less than 8 characters. (This
+    works around an authentication bug in some versions of supervisord).
+  * Many tweaks to the default configuration based on early user feedback.
+
+
 v0.2.0:
 
   * More flexibility in selecting programs via command-line options.  You
