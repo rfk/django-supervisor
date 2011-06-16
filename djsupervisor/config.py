@@ -278,6 +278,13 @@ exclude=true
 ;  All programs are auto-reloaded by default.
 [program:__defaults__]
 autoreload=true
+redirect_stderr=true
+
+[supervisord]
+{% if settings.DEBUG %}
+loglevel=debug
+{% endif %}
+
 
 """
 
