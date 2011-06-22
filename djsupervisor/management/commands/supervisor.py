@@ -121,7 +121,9 @@ class Command(BaseCommand):
         i = 2
         while i < len(argv):
             arg = argv[i]
-            if arg.startswith("--"):
+            if arg == "--":
+                break
+            elif arg.startswith("--"):
                 i += 1
             elif arg.startswith("-"):
                 i += 2
