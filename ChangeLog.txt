@@ -2,6 +2,10 @@
 v0.2.2:
 
   * Fix handling of "--" in options list.
+  * Explicitly use {{ PYTHON }} {{ PROJECT_DIR }}/manage.py in all default
+    recipes.  Using just {{ PROJECT_DIR }}/manage.py can be troublesome if
+    the #! line in manage.py doesn't match the version of python you're
+    using on the command-line.
 
 
 v0.2.1:
