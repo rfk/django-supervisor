@@ -68,10 +68,10 @@ A simple example config might run both the Django development server and the
 Celery task daemon::
 
     [program:webserver]
-    command={{ PROJECT_DIR }}/manage.py runserver --noreload
+    command={{ PYTHON }} {{ PROJECT_DIR }}/manage.py runserver --noreload
  
     [program:celeryd]
-    command={{ PROJECT_DIR }}/manage.py celeryd -l info
+    command={{ PYTHON }} {{ PROJECT_DIR }}/manage.py celeryd -l info
 
 
 Now when you run the "supervisor" management command, it will detect this
@@ -87,9 +87,9 @@ server when debugging but run under FCGI in production::
 
     [program:webserver]
     {% if settings.DEBUG %}
-    command={{ PROJECT_DIR }}/manage.py runserver
+    command={{ PYTHON }} {{ PROJECT_DIR }}/manage.py runserver
     {% else %}
-    command={{ PROJECT_DIR }}/manage.py runfcgi host=127.0.0.1 port=8025
+    command={{ PYTHON }} {{ PROJECT_DIR }}/manage.py runfcgi host=127.0.0.1 port=8025
     {% endif %}
  
 

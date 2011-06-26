@@ -264,12 +264,12 @@ DEFAULT_CONFIG = """
 
 ;  We always provide the 'runserver' process to run the dev server.
 [program:runserver]
-command={{ PROJECT_DIR }}/manage.py runserver --noreload
+command={{ PYTHON }} {{ PROJECT_DIR }}/manage.py runserver --noreload
 
 ;  In debug mode, we watch for changes in the project directory and inside
 ;  any installed apps.  When something changes, restart all processes.
 [program:autoreload]
-command={{ PROJECT_DIR }}/manage.py supervisor {{ SUPERVISOR_OPTIONS }} autoreload
+command={{ PYTHON }} {{ PROJECT_DIR }}/manage.py supervisor {{ SUPERVISOR_OPTIONS }} autoreload
 autoreload=true
 {% if not settings.DEBUG %}
 exclude=true
