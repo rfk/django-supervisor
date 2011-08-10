@@ -198,10 +198,15 @@ def get_config_from_options(**options):
     data = []
     #  Set whether or not to daemonize.
     #  Unlike supervisord, our default is to stay in the foreground.
+    data.append("[supervisord]\n")
     if options.get("daemonize",False):
-        data.append("[supervisord]\nnodaemon=false\n")
+        data.append("nodaemon=false\n")
     else:
-        data.append("[supervisord]\nnodaemon=true\n")
+        data.append("nodaemon=true\n")
+    if options.get("pidfile",None):
+        data.append("pidfile=%s\n" % (options["pidfile"],))
+    if options.get("logfile",None):
+        data.append("logfile=%s\n" % (options["logfile"],))
     #  Set which programs to launch automatically on startup.
     for progname in options.get("launch",None) or []:
         data.append("[program:%s]\nautostart=true\n" % (progname,))

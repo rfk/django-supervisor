@@ -1,4 +1,10 @@
 
+v0.2.3:
+
+  * Add --pidfile and --logfile options; this is helpful when hooking the
+    `manage.py supervisor` script into system init scripts.
+
+
 v0.2.2:
 
   * Fix handling of "--" in options list.

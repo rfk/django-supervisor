@@ -69,6 +69,16 @@ class Command(BaseCommand):
             default=False,
             help="daemonize before launching subprocessess"
         ),
+        make_option("--pidfile",None,
+            action="store",
+            dest="pidfile",
+            help="store daemon PID in this file"
+        ),
+        make_option("--logfile",None,
+            action="store",
+            dest="logfile",
+            help="write logging output to this file"
+        ),
         make_option("--launch","-l",
             metavar="PROG",
             action="append",
@@ -93,11 +103,6 @@ class Command(BaseCommand):
             dest="include",
             help="don't exclude program from supervisor config"
         ),
-        make_option("--noreload",
-            action="store_true",
-            dest="noreload",
-            help="don't restart processes when code files change"
-        ),
         make_option("--autoreload","-r",
             metavar="PROG",
             action="append",
@@ -105,6 +110,11 @@ class Command(BaseCommand):
             help="restart program automatically when code files change"
                  " (debug mode only;"
                  " if not set then all programs are autoreloaded)"
+        ),
+        make_option("--noreload",
+            action="store_true",
+            dest="noreload",
+            help="don't restart processes when code files change"
         ),
     )
 
