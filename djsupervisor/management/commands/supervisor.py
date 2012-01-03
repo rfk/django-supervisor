@@ -79,6 +79,13 @@ class Command(BaseCommand):
             dest="logfile",
             help="write logging output to this file"
         ),
+        make_option("--project-dir",None,
+            action="store",
+            dest="project_dir",
+            help="the root directory for the django project"
+                 " (by default this is guessed from the location"
+                 " of manage.py)"
+        ),
         make_option("--launch","-l",
             metavar="PROG",
             action="append",
@@ -175,14 +182,14 @@ class Command(BaseCommand):
         return supervisorctl.main(("-c",cfg_file) + args)
 
     def _handle_getconfig(self,cfg_file,*args,**options):
-        """Command 'supervisord getconfig' prints merged config to stdout."""
+        """Command 'supervisor getconfig' prints merged config to stdout."""
         if args:
-            raise CommandError("supervisord getconfig takes no arguments")
+            raise CommandError("supervisor getconfig takes no arguments")
         print cfg_file.getvalue()
         return 0
 
     def _handle_autoreload(self,cfg_file,*args,**options):
-        """Command 'supervisord autoreload' watches for code changes.
+        """Command 'supervisor autoreload' watches for code changes.
 
         This command provides a simulation of the Django dev server's
         auto-reloading mechanism that will restart all supervised processes.
@@ -193,7 +200,7 @@ class Command(BaseCommand):
         that are "nearby" the files loaded at startup by Django.
         """
         if args:
-            raise CommandError("supervisord autoreload takes no arguments")
+            raise CommandError("supervisor autoreload takes no arguments")
         live_dirs = self._find_live_code_dirs()
         mtimes = {}
         reload_progs = self._get_autoreload_programs(cfg_file)
@@ -270,7 +277,7 @@ class Command(BaseCommand):
                 if dirnm.startswith(dirnm2):
                     break
             else:
-                #  Remove any one's we've found that are subdirs of it.
+                #  Remove any ones we've found that are subdirs of it.
                 live_dirs = [dirnm2 for dirnm2 in live_dirs\
                                     if not dirnm2.startswith(dirnm)]
                 live_dirs.append(dirnm)

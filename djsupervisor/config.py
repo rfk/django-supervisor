@@ -38,18 +38,15 @@ def get_merged_config(**options):
     configuration as a string.
     """
     #  Find and load the containing project module.
-    #  This is assumed to be the top-level package containing settings module.
-    #  If it doesn't contain a manage.py script, we're in trouble.
-    projname = settings.SETTINGS_MODULE.split(".",1)[0]
-    projmod = import_module(projname)
-    projdir = os.path.dirname(projmod.__file__)
-    if not os.path.isfile(os.path.join(projdir,"manage.py")):
-        msg = "Project %s doesn't have a ./manage.py" % (projname,)
-        raise RuntimeError(msg)
+    #  This can be specified explicity using the --project-dir option.
+    #  Otherwise, we attempt to guess by looking for the manage.py file.
+    project_dir = options.get("project_dir")
+    if project_dir is None:
+        project_dir = guess_project_dir()
     #  Build the default template context variables.
     #  This is mostly useful information about the project and environment.
     ctx = {
-        "PROJECT_DIR": projdir,
+        "PROJECT_DIR": project_dir,
         "PYTHON": os.path.realpath(os.path.abspath(sys.executable)),
         "SUPERVISOR_OPTIONS": rerender_options(options),
         "settings": settings,
@@ -64,10 +61,10 @@ def get_merged_config(**options):
     data = render_config(DEFAULT_CONFIG,ctx)
     cfg.readfp(StringIO(data))
     #  Add in each app-specific file in turn.
-    for data in find_app_configs(ctx,projmod):
+    for data in find_app_configs(ctx):
         cfg.readfp(StringIO(data))
     #  Add in the project-specific config file.
-    projcfg = os.path.join(projdir,CONFIG_FILE_NAME)
+    projcfg = os.path.join(project_dir,CONFIG_FILE_NAME)
     if os.path.isfile(projcfg):
         with open(projcfg,"r") as f:
             data = render_config(f.read(),ctx)
@@ -151,7 +148,7 @@ def render_config(data,ctx):
     return t.render(c).encode("ascii")
 
 
-def find_app_configs(ctx,projmod):
+def find_app_configs(ctx):
     """Generator yielding app-provided config file data.
 
     This function searches for supervisord config files within each of the
@@ -229,6 +226,33 @@ def get_config_from_options(**options):
     if options.get("noreload",False):
         data.append("[program:autoreload]\nexclude=true\n")
     return "".join(data)
+
+
+def guess_project_dir():
+    """Find the top-level Django project directory.
+
+    This function guesses the top-level Django project directory based on
+    the current environment.  It looks for module containing the currently-
+    active settings module, in both pre-1.4 and post-1.4 layours.
+    """
+    projname = settings.SETTINGS_MODULE.split(".",1)[0]
+    projmod = import_module(projname)
+    projdir = os.path.dirname(projmod.__file__)
+
+    # For Django 1.3 and earlier, the manage.py file was located
+    # in the same directory as the settings file.
+    if os.path.isfile(os.path.join(projdir,"manage.py")):
+        return projdir
+
+    # For Django 1.4 and later, the manage.py file is located in
+    # the directory *containing* the settings file.
+    projdir = os.path.abspath(os.path.join(projdir, os.path.pardir))
+    if os.path.isfile(os.path.join(projdir,"manage.py")):
+        return projdir
+
+    msg = "Unable to determine the Django project directory;"\
+          " use --project-dir to specify it"
+    raise RuntimeError(msg)
 
 
 def set_if_missing(cfg,section,option,value):

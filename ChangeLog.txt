@@ -1,4 +1,10 @@
 
+v0.2.4:
+
+  * Support for Django-1.4-style project directory layout; thanks j4mie.
+  * Add --project-dir option; thanks j4mie.
+
+
 v0.2.3:
 
   * Add --pidfile and --logfile options; this is helpful when hooking the

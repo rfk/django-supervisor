@@ -174,6 +174,23 @@ For details of all the available management commands, consult the supervisord
 documentation.
 
 
+Command-Line Options
+~~~~~~~~~~~~~~~~~~~~
+
+The "supervisor" command accepts the following options:
+
+  --daemonize             run the supervisord process in the background
+  --pidfile               store PID of supervisord process in this file
+  --loggile               write supervisord logs to this file
+  --project-dir           use this as the django project directory
+  --launch=program        launch program automatically at supervisor startup
+  --nolaunch=program      don't launch program automatically at startup
+  --exclude=program       remove program from the supervisord config
+  --include=program       include program in the supervisord config
+  --autoreload=program    restart program when code files change
+  --noreload              don't restart programs when code files change
+
+
 Extra Goodies
 -------------
 
@@ -187,21 +204,21 @@ Templating
 All supervisord.conf files are rendered through Django's templating system.
 This allows you to interpolate values from the settings or environment, and
 conditionally switch processes on or off.  The template context for each
-configuration file contains the following variables:
+configuration file contains the following variables::
 
-    :PROJECT_DIR:          the top-level directory of your project (i.e. the
-                           directory containing your manage.py script).
+    PROJECT_DIR          the top-level directory of your project (i.e. the
+                         directory containing your manage.py script).
 
-    :APP_DIR:              for app-provided config files, the top-level
-                           directory containing the application code.
+    APP_DIR              for app-provided config files, the top-level
+                         directory containing the application code.
 
-    :PYTHON:               full path to the current python interpreter.
+    PYTHON               full path to the current python interpreter.
 
-    :SUPERVISOR_OPTIONS:   the command-line options passed to manage.py. 
+    SUPERVISOR_OPTIONS   the command-line options passed to manage.py. 
  
-    :settings:             the Django settings module, as seen by your code.
+    settings             the Django settings module, as seen by your code.
 
-    :environ:              the os.environ dict, as seen by your code.
+    environ              the os.environ dict, as seen by your code.
 
 
 
