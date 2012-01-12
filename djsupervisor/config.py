@@ -274,6 +274,7 @@ def rerender_options(options):
     """
     args = []
     for name,value in options.iteritems():
+        name = name.replace("_","-")
         if value is None:
             pass
         elif isinstance(value,bool):
