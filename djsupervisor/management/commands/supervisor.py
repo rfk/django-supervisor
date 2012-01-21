@@ -152,11 +152,10 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         #  We basically just construct the merged supervisord.conf file
         #  and forward it on to either supervisord or supervisorctl.
-        cfg = get_merged_config(**options)
         #  Due to some very nice engineering on behalf of supervisord authors,
         #  you can pass it a StringIO instance for the "-c" command-line
         #  option.  Saves us having to write the config to a tempfile.
-        cfg_file = StringIO(cfg)
+        cfg_file = OnDemandStringIO(get_merged_config, **options)
         #  With no arguments, we launch the processes under supervisord.
         if not args:
             return supervisord.main(("-c",cfg_file))
@@ -300,3 +299,37 @@ class Command(BaseCommand):
                     if ext in ("py","pyc","pyo",):
                         yield os.path.join(subdirnm,filebase+".py")
 
+
+class OnDemandStringIO(object):
+    """StringIO standin that demand-loads its contents and resets on EOF.
+
+    This class is a little bit of a hack to make supervisord reloading work
+    correctly.  It provides the readlines() method expected by supervisord's
+    config reader, but it resets itself after indicating end-of-file.  If
+    the supervisord process then SIGHUPs and tries to read the config again,
+    it will be re-created and available for updates.
+    """
+
+    def __init__(self, callback, *args, **kwds):
+        self._fp = None
+        self.callback = callback
+        self.args = args
+        self.kwds = kwds
+
+    @property
+    def fp(self):
+        if self._fp is None:
+            self._fp = StringIO(self.callback(*self.args, **self.kwds))
+        return self._fp
+
+    def read(self, *args, **kwds):
+        data = self.fp.read(*args, **kwds)
+        if not data:
+            self._fp = None
+        return data
+
+    def readline(self, *args, **kwds):
+        line = self.fp.readline(*args, **kwds)
+        if not line:
+            self._fp = None
+        return line

@@ -1,4 +1,10 @@
 
+v0.2.5:
+
+  * Fix `manage.py supervisor reload` to actually work, with the handy
+    benefit of also reloading the config file from disk; thanks jezdez.
+
+
 v0.2.4:
 
   * Support for Django-1.4-style project directory layout; thanks j4mie.
