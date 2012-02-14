@@ -184,7 +184,7 @@ class Command(BaseCommand):
         """Command 'supervisor getconfig' prints merged config to stdout."""
         if args:
             raise CommandError("supervisor getconfig takes no arguments")
-        print cfg_file.getvalue()
+        print cfg_file.read()
         return 0
 
     def _handle_autoreload(self,cfg_file,*args,**options):
@@ -253,7 +253,7 @@ class Command(BaseCommand):
 
         This walks all of the currently-imported modules and adds their
         containing directory to the list of live dirs.  After normalization
-        and de-duplication, we get a pretty good approximation of the 
+        and de-duplication, we get a pretty good approximation of the
         directories on sys.path that are actively in use.
         """
         live_dirs = []
