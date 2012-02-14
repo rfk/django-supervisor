@@ -1,4 +1,10 @@
 
+v0.2.6:
+
+  * Fix `manage.py supervisor getconfig` to work with the changes introduced
+    in version 0.2.5; thanks sebleier.
+
+
 v0.2.5:
 
   * Fix `manage.py supervisor reload` to actually work, with the handy
