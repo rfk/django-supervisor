@@ -22,8 +22,7 @@ The "supervisor" command suports several modes of operation:
 
 """
 
-from __future__ import absolute_import
-from __future__ import with_statement
+from __future__ import absolute_import, with_statement
 
 import sys
 import os
@@ -38,9 +37,12 @@ except ImportError:
 
 from supervisor import supervisord, supervisorctl
 
+from watchdog.observers import Observer
+
 from django.core.management.base import BaseCommand, CommandError
 
 from djsupervisor.config import get_merged_config
+from djsupervisor.events import CallbackModifiedHandler
 
 
 class Command(BaseCommand):
@@ -201,16 +203,32 @@ class Command(BaseCommand):
         if args:
             raise CommandError("supervisor autoreload takes no arguments")
         live_dirs = self._find_live_code_dirs()
-        mtimes = {}
         reload_progs = self._get_autoreload_programs(cfg_file)
-        while True:
-            if self._code_has_changed(live_dirs,mtimes):
-                #  Fork a subprocess to make the restart call.
-                #  Otherwise supervisord might kill us and cancel the restart!
-                if os.fork() == 0:
-                    self.handle("restart",*reload_progs,**options)
-                return 0
-            time.sleep(1)
+
+        observer = Observer()
+
+        def autoreloader():
+            """
+            Forks a subprocess to make the restart call.
+            Otherwise supervisord might kill us and cancel the restart!
+            """
+            if os.fork() == 0:
+                self.handle("restart", *reload_progs, **options)
+
+        handler = CallbackModifiedHandler(callback=autoreloader,
+                                          patterns=['*.py', '*.pyc', '*.pyo'],
+                                          ignore_patterns=[".*", "#*", "*~"],
+                                          ignore_directories=True)
+        for live_dir in set(live_dirs):
+            observer.schedule(handler, live_dir, True)
+        observer.start()
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            observer.stop()
+        observer.join()
+        return 0
 
     def _get_autoreload_programs(self,cfg_file):
         """Get the set of programs to auto-reload when code changes.
@@ -230,23 +248,6 @@ class Command(BaseCommand):
                 except NoOptionError:
                     pass
         return reload_progs
-
-    def _code_has_changed(self,live_dirs,mtimes):
-        """Check whether code under the given directories has changed.
-
-        This is a simple check based on file mtime.  New or deleted files
-        don't count as code changes.
-        """
-        for filepath in self._find_live_code_files(live_dirs):
-            try:
-                stat = os.stat(filepath)
-            except EnvironmentError:
-                continue
-            if filepath not in mtimes:
-                mtimes[filepath] = stat.st_mtime
-            else:
-                if mtimes[filepath] != stat.st_mtime:
-                    return True
 
     def _find_live_code_dirs(self):
         """Find all directories in which we might have live python code.
@@ -281,23 +282,6 @@ class Command(BaseCommand):
                                     if not dirnm2.startswith(dirnm)]
                 live_dirs.append(dirnm)
         return live_dirs
-
-    def _find_live_code_files(self,live_dirs):
-        """Find live python code files, that must be watched for changes.
-
-        Given a pre-computed list of directories in which to search, this
-        method finds all the python files under those directories and yields
-        their full paths.
-        """
-        for dirnm in live_dirs:
-            for (subdirnm,_,filenms) in os.walk(dirnm):
-                for filenm in filenms:
-                    try:
-                        filebase,ext = filenm.rsplit(".",1)
-                    except ValueError:
-                        continue
-                    if ext in ("py","pyc","pyo",):
-                        yield os.path.join(subdirnm,filebase+".py")
 
 
 class OnDemandStringIO(object):
