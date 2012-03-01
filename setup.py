@@ -74,6 +74,7 @@ setup(
   classifiers=CLASSIFIERS,
   install_requires=[
     "supervisor",
+    "watchdog",
   ],
   **setup_kwds
 )
