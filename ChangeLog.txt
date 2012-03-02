@@ -1,4 +1,10 @@
 
+v0.2.7:
+
+  * Use watchdog for the auto-reload mechanism instead of continuously 
+    polling the filesystem; thanks jezdez.
+
+
 v0.2.6:
 
   * Fix `manage.py supervisor getconfig` to work with the changes introduced

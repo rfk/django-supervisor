@@ -29,6 +29,7 @@ import os
 import time
 from optparse import make_option
 from textwrap import dedent
+import traceback
 from ConfigParser import RawConfigParser, NoOptionError
 try:
     from cStringIO import StringIO
@@ -38,6 +39,7 @@ except ImportError:
 from supervisor import supervisord, supervisorctl
 
 from watchdog.observers import Observer
+from watchdog.observers.polling import PollingObserver
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -219,8 +221,32 @@ class Command(BaseCommand):
                                           patterns=['*.py', '*.pyc', '*.pyo'],
                                           ignore_patterns=[".*", "#*", "*~"],
                                           ignore_directories=True)
-        for live_dir in set(live_dirs):
-            observer.schedule(handler, live_dir, True)
+
+        # Try to add watches using the platform-specific observer.
+        # If this fails, print a warning and fall back to the PollingObserver.
+        # This will avoid errors with e.g. too many inotify watches.
+        observer = None
+        for ObserverCls in (Observer, PollingObserver):
+            observer = ObserverCls()
+            try:
+                for live_dir in set(live_dirs):
+                    observer.schedule(handler, live_dir, True)
+                break
+            except Exception:
+                print>>sys.stderr, "COULD NOT WATCH FILESYSTEM USING"
+                print>>sys.stderr, "OBSERVER CLASS: ", ObserverCls
+                traceback.print_exc()
+                observer.start()
+                observer.stop()
+
+        # Fail out if none of the observers worked.
+        if observer is None:
+            print>>sys.stderr, "COULD NOT WATCH FILESYSTEM"
+            return 1
+
+        # Poll of we have an observer.
+        # TODO: Is this sleep necessary?  Or will it suffice
+        # to block indefinitely on something and wait to be killed?
         observer.start()
         try:
             while True:
