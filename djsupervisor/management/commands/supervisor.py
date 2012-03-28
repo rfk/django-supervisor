@@ -207,15 +207,13 @@ class Command(BaseCommand):
         live_dirs = self._find_live_code_dirs()
         reload_progs = self._get_autoreload_programs(cfg_file)
 
-        observer = Observer()
-
         def autoreloader():
             """
             Forks a subprocess to make the restart call.
             Otherwise supervisord might kill us and cancel the restart!
             """
             if os.fork() == 0:
-                self.handle("restart", *reload_progs, **options)
+                sys.exit(self.handle("restart", *reload_progs, **options))
 
         handler = CallbackModifiedHandler(callback=autoreloader,
                                           patterns=['*.py', '*.pyc', '*.pyo'],
@@ -244,7 +242,7 @@ class Command(BaseCommand):
             print>>sys.stderr, "COULD NOT WATCH FILESYSTEM"
             return 1
 
-        # Poll of we have an observer.
+        # Poll if we have an observer.
         # TODO: Is this sleep necessary?  Or will it suffice
         # to block indefinitely on something and wait to be killed?
         observer.start()
