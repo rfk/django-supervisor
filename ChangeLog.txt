@@ -1,4 +1,10 @@
 
+v0.2.8:
+
+  * Ensure that the forked autoreload subprocess exits; thanks rassie.
+  * Limit autoreload callback firing to once per second; thanks rassie.
+
+
 v0.2.7:
 
   * Use watchdog for the auto-reload mechanism instead of continuously 
