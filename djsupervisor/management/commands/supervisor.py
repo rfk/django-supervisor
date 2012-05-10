@@ -42,10 +42,15 @@ from watchdog.observers import Observer
 from watchdog.observers.polling import PollingObserver
 
 from django.core.management.base import BaseCommand, CommandError
+from django.conf import settings
 
 from djsupervisor.config import get_merged_config
 from djsupervisor.events import CallbackModifiedHandler
 
+AUTORELOAD_PATTERNS = getattr(settings, "SUPERVISOR_AUTORELOAD_PATTERNS",
+                              ['*.py', '*.pyc', '*.pyo'])
+AUTORELOAD_IGNORE = getattr(settings, "SUPERVISOR_AUTORELOAD_IGNORE_PATTERNS", 
+                            [".*", "#*", "*~"])
 
 class Command(BaseCommand):
 
@@ -219,8 +224,8 @@ class Command(BaseCommand):
         # To prevent thrashing, limit callbacks to one per second.
         handler = CallbackModifiedHandler(callback=autoreloader,
                                           repeat_delay=1,
-                                          patterns=['*.py', '*.pyc', '*.pyo'],
-                                          ignore_patterns=[".*", "#*", "*~"],
+                                          patterns=AUTORELOAD_PATTERNS,
+                                          ignore_patterns=AUTORELOAD_IGNORE,
                                           ignore_directories=True)
 
         # Try to add watches using the platform-specific observer.
