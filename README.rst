@@ -298,6 +298,12 @@ option to supervisor or just exclude it in your project config file like so::
     [program:autoreload]
     exclude=true
 
+Optionally, the file patterns on which autoreload listens for changes can
+be set in your project's settings.py:
+
+    SUPERVISOR_AUTORELOAD_PATTERNS = ["*.py", "*.pyc", "*.pyo"]
+    SUPERVISOR_AUTORELOAD_IGNORE_PATTERNS = [".*", "#*", "*~"]
+
 
 
 More Info
