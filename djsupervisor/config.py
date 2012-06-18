@@ -24,7 +24,8 @@ from ConfigParser import RawConfigParser, NoSectionError, NoOptionError
 from django import template
 from django.conf import settings
 from django.utils.importlib import import_module
- 
+
+from templatetags import djtags
 
 CONFIG_FILE_NAME = "supervisord.conf"
 
@@ -52,6 +53,11 @@ def get_merged_config(**options):
         "settings": settings,
         "environ": os.environ,
     }
+
+    #  Update our djtags module with the context it needs to run.
+    djtags.project_dir = project_dir
+    djtags.ctx = ctx
+
     #  Initialise the ConfigParser.
     #  Fortunately for us, ConfigParser has merge-multiple-config-files
     #  functionality built into it.  You just read each file in turn, and
