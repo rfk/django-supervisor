@@ -1,6 +1,6 @@
 v0.3.0:
 
-  * Add "templated" template tag to apply templating to other config files;
+  * Add "templated" template filter to apply templating to other config files;
     thanks Michael Rooney.
   * Make autoreload include/ignore patterns configurable via settings;
     thanks Hannes Struss.

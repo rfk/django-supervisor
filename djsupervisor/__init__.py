@@ -220,6 +220,16 @@ configuration file contains the following variables::
 
     environ              the os.environ dict, as seen by your code.
 
+If your project has other configuration files that need to interpolate these
+values, you can refer to them via the "templated" filter, like this::
+
+    [program:nginx]
+    command=nginx -c {{ "nginx.conf"|templated }}
+
+The file path is relative to your project directory.  Django-supervisor will
+read the specified file, pass it through its tepmlating logic, write out a
+matching "nginx.conf.templated" file, and insert the path to this file as the
+result of the filter.
 
 
 Defaults, Overrides and Excludes
@@ -297,15 +307,6 @@ option to supervisor or just exclude it in your project config file like so::
 
     [program:autoreload]
     exclude=true
-
-
-
-More Info
----------
-
-There aren't any more docs online yet.  Sorry.  I'm working on a little tutorial
-and some examples, but I need to actually *use* the project a little more
-first to make sure it all fits together the way I want...
 
 """
 
