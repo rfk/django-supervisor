@@ -25,7 +25,7 @@ from django import template
 from django.conf import settings
 from django.utils.importlib import import_module
 
-from templatetags import djtags
+from djsupervisor.templatetags import djsupervisor_tags
 
 CONFIG_FILE_NAME = "supervisord.conf"
 
@@ -53,11 +53,6 @@ def get_merged_config(**options):
         "settings": settings,
         "environ": os.environ,
     }
-
-    #  Update our djtags module with the context it needs to run.
-    djtags.project_dir = project_dir
-    djtags.ctx = ctx
-
     #  Initialise the ConfigParser.
     #  Fortunately for us, ConfigParser has merge-multiple-config-files
     #  functionality built into it.  You just read each file in turn, and
@@ -149,6 +144,8 @@ def render_config(data,ctx):
     This function takes a config data string and a dict of context variables,
     renders the data through Django's template system, and returns the result.
     """
+    djsupervisor_tags.current_context = ctx
+    data = "{% load djsupervisor_tags %}" + data
     t = template.Template(data)
     c = template.Context(ctx)
     return t.render(c).encode("ascii")
@@ -321,6 +318,4 @@ redirect_stderr=true
 loglevel=debug
 {% endif %}
 
-
 """
-
