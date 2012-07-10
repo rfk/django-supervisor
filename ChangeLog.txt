@@ -10,6 +10,8 @@ v0.3.0:
     thanks Michael Rooney.
   * Make autoreload include/ignore patterns configurable via settings;
     thanks Hannes Struss.
+  * Don't autoreload when .pyc or .pyo files change, only .py files.  This
+    avoids spurious reloads when a .py file is compiled for the first time.
 
 
 v0.2.8:

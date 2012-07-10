@@ -48,7 +48,7 @@ from djsupervisor.config import get_merged_config
 from djsupervisor.events import CallbackModifiedHandler
 
 AUTORELOAD_PATTERNS = getattr(settings, "SUPERVISOR_AUTORELOAD_PATTERNS",
-                              ['*.py', '*.pyc', '*.pyo'])
+                              ['*.py'])
 AUTORELOAD_IGNORE = getattr(settings, "SUPERVISOR_AUTORELOAD_IGNORE_PATTERNS", 
                             [".*", "#*", "*~"])
 
@@ -227,7 +227,7 @@ class Command(BaseCommand):
             if os.fork() == 0:
                 sys.exit(self.handle("restart", *reload_progs, **options))
 
-        # Call the autoreloader callback whenever a .py[co] file changes.
+        # Call the autoreloader callback whenever a .py file changes.
         # To prevent thrashing, limit callbacks to one per second.
         handler = CallbackModifiedHandler(callback=autoreloader,
                                           repeat_delay=1,
