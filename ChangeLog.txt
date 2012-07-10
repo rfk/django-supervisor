@@ -1,5 +1,9 @@
 v0.3.0:
 
+  * Remove support for application-supplied config files.  They seemed to be
+    causing more problems than they solved, and none of the built-in ones
+    provided more than a few lines of logic.
+  * Remove the default "runserver" program, for the same reasons as above.
   * Add "templated" template filter to apply templating to other config files;
     thanks Michael Rooney.
   * Make autoreload include/ignore patterns configurable via settings;

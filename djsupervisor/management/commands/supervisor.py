@@ -64,6 +64,7 @@ class Command(BaseCommand):
            With a command argument it lets you control the running processes.
            Available commands include:
 
+               supervisor getconfig
                supervisor shell
                supervisor start <progname>
                supervisor stop <progname>

@@ -93,19 +93,6 @@ server when debugging but run under FCGI in production::
     {% endif %}
  
 
-For more flexibility, django-supervisor also supports per-application config
-files.  For each application in INSTALLED_APPS, it will search for config
-files in the following locations:
-
-   * <app directory>/management/supervisord.conf
-   * djsupervisor/contrib/<app name>/supervisord.conf
-
-Any files so found will be merged together, and then merged with your project
-configuration to produce the final supervisord config.  This allows you to
-include basic process management definitions as part of a reusable Django
-application, and tweak or override them on a per-project basis.
-
-
 Usage
 -----
 
@@ -227,7 +214,7 @@ values, you can refer to them via the "templated" filter, like this::
     command=nginx -c {{ "nginx.conf"|templated }}
 
 The file path is relative to your project directory.  Django-supervisor will
-read the specified file, pass it through its tepmlating logic, write out a
+read the specified file, pass it through its templating logic, write out a
 matching "nginx.conf.templated" file, and insert the path to this file as the
 result of the filter.
 
@@ -262,9 +249,8 @@ Here's an example config file that shows them all in action::
     [program:__overrides__]
     user=nobody
 
-    ; Django-supervisord ships with a default configuration for celerybeat.
-    ; We don't use it, so remove it from the config.
-    [program:celerybeat]
+    ; Don't reload programs when python code changes.
+    [program:autoreload]
     exclude=true
 
 
