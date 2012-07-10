@@ -43,9 +43,6 @@ Django's management scripts you gain several advantages:
     * You get auto-reloading for *all* processes when running in debug mode.
     * Process configuration can depend on Django settings and environment
       variables, and have paths relative to your project and/or apps.
-    * Apps can provide default process configurations, which projects can
-      then tweak or override as needed.
-
 
 
 Configuration

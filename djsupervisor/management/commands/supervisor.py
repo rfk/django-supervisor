@@ -96,6 +96,12 @@ class Command(BaseCommand):
                  " (by default this is guessed from the location"
                  " of manage.py)"
         ),
+        make_option("--config-file",None,
+            action="store",
+            dest="config_file",
+            help="the supervisord configuration file to load"
+                 " (by default this is <project-dir>/supervisord.conf)"
+        ),
         make_option("--launch","-l",
             metavar="PROG",
             action="append",

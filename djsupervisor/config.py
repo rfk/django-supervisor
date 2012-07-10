@@ -27,7 +27,7 @@ from django.utils.importlib import import_module
 
 from djsupervisor.templatetags import djsupervisor_tags
 
-CONFIG_FILE_NAME = "supervisord.conf"
+CONFIG_FILE = getattr(settings, "SUPERVISOR_CONFIG_FILE", "supervisord.conf")
 
 
 def get_merged_config(**options):
@@ -44,6 +44,11 @@ def get_merged_config(**options):
     project_dir = options.get("project_dir")
     if project_dir is None:
         project_dir = guess_project_dir()
+    # Find the config file to load.
+    # Default to <project-dir>/supervisord.conf.
+    config_file = options.get("config_file")
+    if config_file is None:
+        config_file = os.path.join(project_dir,CONFIG_FILE)
     #  Build the default template context variables.
     #  This is mostly useful information about the project and environment.
     ctx = {
@@ -62,11 +67,9 @@ def get_merged_config(**options):
     data = render_config(DEFAULT_CONFIG,ctx)
     cfg.readfp(StringIO(data))
     #  Add in the project-specific config file.
-    projcfg = os.path.join(project_dir,CONFIG_FILE_NAME)
-    if os.path.isfile(projcfg):
-        with open(projcfg,"r") as f:
-            data = render_config(f.read(),ctx)
-        cfg.readfp(StringIO(data))
+    with open(config_file,"r") as f:
+        data = render_config(f.read(),ctx)
+    cfg.readfp(StringIO(data))
     #  Add in the options specified on the command-line.
     cfg.readfp(StringIO(get_config_from_options(**options)))
     #  Add options from [program:__defaults__] to each program section

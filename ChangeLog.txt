@@ -4,6 +4,8 @@ v0.3.0:
     causing more problems than they solved, and none of the built-in ones
     provided more than a few lines of logic.
   * Remove the default "runserver" program, for the same reasons as above.
+  * Add setting and option to specify the supervisord config file; that's
+    SUPERVISOR_CONFIG_FILE and --config-file respectively.
   * Add "templated" template filter to apply templating to other config files;
     thanks Michael Rooney.
   * Make autoreload include/ignore patterns configurable via settings;
