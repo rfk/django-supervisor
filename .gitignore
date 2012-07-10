@@ -8,3 +8,4 @@ dist/
 cover
 .tox
 MANIFEST
+*.egg-info
