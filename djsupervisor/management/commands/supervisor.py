@@ -178,7 +178,8 @@ class Command(BaseCommand):
         #  With arguments, the first arg specifies the sub-command
         #  Some commands we implement ourself with _handle_<command>.
         #  The rest we just pass on to supervisorctl.
-        assert args[0].isalnum()
+        if not args[0].isalnum():
+            raise ValueError("Unknown supervisor command: %s" % (args[0],))
         methname = "_handle_%s" % (args[0],)
         try:
             method = getattr(self,methname)
