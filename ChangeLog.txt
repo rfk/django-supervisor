@@ -1,3 +1,9 @@
+v0.3.1:
+
+  * Remove trailing slashes in MANIFEST.in, which break setuptools when
+    used on Windows.
+
+
 v0.3.0:
 
   * Remove support for application-supplied config files.  They seemed to be
