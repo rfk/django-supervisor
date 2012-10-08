@@ -2,5 +2,4 @@
 include README.rst
 include LICENSE.txt
 include ChangeLog.txt
-recursive-include djsupervisor *.conf
 
