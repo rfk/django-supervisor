@@ -1,5 +1,4 @@
 
-
 djsupervisor:  easy integration between django and supervisord
 ==============================================================
 
@@ -168,7 +167,7 @@ The "supervisor" command accepts the following options:
 
   --daemonize             run the supervisord process in the background
   --pidfile               store PID of supervisord process in this file
-  --loggile               write supervisord logs to this file
+  --logfile               write supervisord logs to this file
   --project-dir           use this as the django project directory
   --launch=program        launch program automatically at supervisor startup
   --nolaunch=program      don't launch program automatically at startup
