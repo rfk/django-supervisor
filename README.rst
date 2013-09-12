@@ -69,9 +69,11 @@ Celery task daemon::
     [program:webserver]
     command={{ PYTHON }} {{ PROJECT_DIR }}/manage.py runserver --noreload
  
-    [program:celeryd]
-    command={{ PYTHON }} {{ PROJECT_DIR }}/manage.py celeryd -l info
+    [program:celeryworker]
+    command={{ PYTHON }} {{ PROJECT_DIR }}/manage.py celery worker -l info
 
+    [program:celerybeat]
+    command={{ PYTHON }} {{ PROJECT_DIR }}/manage.py celery beat -l info
 
 Now when you run the "supervisor" management command, it will detect this
 file and start the two processes for you.
