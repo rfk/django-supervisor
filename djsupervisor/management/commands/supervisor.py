@@ -38,9 +38,6 @@ except ImportError:
 
 from supervisor import supervisord, supervisorctl
 
-from watchdog.observers import Observer
-from watchdog.observers.polling import PollingObserver
-
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 
@@ -239,6 +236,9 @@ class Command(BaseCommand):
         # Try to add watches using the platform-specific observer.
         # If this fails, print a warning and fall back to the PollingObserver.
         # This will avoid errors with e.g. too many inotify watches.
+        from watchdog.observers import Observer
+        from watchdog.observers.polling import PollingObserver
+        
         observer = None
         for ObserverCls in (Observer, PollingObserver):
             observer = ObserverCls()
