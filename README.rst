@@ -97,7 +97,7 @@ server when debugging but run under FCGI in production::
 Usage
 -----
 
-Django-supervisor provides a new Django manangement command named "supervisor"
+Django-supervisor provides a new Django management command named "supervisor"
 which allows you to control all of the processes belonging to your project.
 
 When run without arguments, it will spawn supervisord to launch and monitor
