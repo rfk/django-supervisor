@@ -19,21 +19,18 @@ except NameError:
         return i.next()
 
 
+# Try to get "__version__" from the module itself.
 info = {}
-try:
-    src = open("djsupervisor/__init__.py")
-    lines = []
+src = open("djsupervisor/__init__.py")
+lines = []
+ln = next(src)
+while "__version__" not in ln:
+    lines.append(ln)
     ln = next(src)
-    while "__version__" not in ln:
-        lines.append(ln)
-        ln = next(src)
-    while "__version__" in ln:
-        lines.append(ln)
-        ln = next(src)
-    exec("".join(lines),info)
-except Exception:
-    raise
-    pass
+while "__version__" in ln:
+    lines.append(ln)
+    ln = next(src)
+exec("".join(lines),info)
 
 
 NAME = "django-supervisor"
