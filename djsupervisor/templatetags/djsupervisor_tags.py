@@ -14,12 +14,11 @@ import shutil
 from django import template
 register = template.Library()
 
-import djsupervisor.config
-
 current_context = None
 
 @register.filter
 def templated(template_path):
+    import djsupervisor.config
     # Interpret paths relative to the project directory.
     project_dir = current_context["PROJECT_DIR"]
     full_path = os.path.join(project_dir, template_path)
