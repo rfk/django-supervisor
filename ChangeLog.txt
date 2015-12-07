@@ -1,3 +1,13 @@
+v0.3.4:
+
+  * Fix cyclic import dependency in  Django 1.9; thanks Alexander Komkov.
+
+v0.3.3:
+
+  * Remove use of deprecated django.util.importlib; thanks David Costa.
+  * Fix typo in documentation; thanks Shicha An
+
+
 v0.3.2:
 
   * Only require watchdog to be available if we're actually using the
