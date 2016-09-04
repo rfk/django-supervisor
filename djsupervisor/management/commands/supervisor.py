@@ -27,7 +27,6 @@ from __future__ import absolute_import, with_statement
 import sys
 import os
 import time
-from optparse import make_option
 from textwrap import dedent
 import traceback
 from ConfigParser import RawConfigParser, NoOptionError
@@ -69,74 +68,91 @@ class Command(BaseCommand):
 
            """).strip()
 
-    option_list = BaseCommand.option_list + (
-        make_option("--daemonize","-d",
+    def add_arguments(self, parser):
+        parser.add_argument('ctl-command', nargs='*')
+        parser.add_argument(
+            "--daemonize",
+            "-d",
             action="store_true",
             dest="daemonize",
             default=False,
             help="daemonize before launching subprocessess"
-        ),
-        make_option("--pidfile",None,
+        )
+        parser.add_argument(
+            "--pidfile",
             action="store",
             dest="pidfile",
             help="store daemon PID in this file"
-        ),
-        make_option("--logfile",None,
+        )
+        parser.add_argument(
+            "--logfile",
             action="store",
             dest="logfile",
             help="write logging output to this file"
-        ),
-        make_option("--project-dir",None,
+        )
+        parser.add_argument(
+            "--project-dir",
             action="store",
             dest="project_dir",
             help="the root directory for the django project"
                  " (by default this is guessed from the location"
                  " of manage.py)"
-        ),
-        make_option("--config-file",None,
+        )
+        parser.add_argument(
+            "--config-file",
             action="store",
             dest="config_file",
             help="the supervisord configuration file to load"
                  " (by default this is <project-dir>/supervisord.conf)"
-        ),
-        make_option("--launch","-l",
+        )
+        parser.add_argument(
+            "--launch",
+            "-l",
             metavar="PROG",
             action="append",
             dest="launch",
             help="launch program automatically at supervisor startup"
-        ),
-        make_option("--nolaunch","-n",
+        )
+        parser.add_argument(
+            "--nolaunch",
+            "-n",
             metavar="PROG",
             action="append",
             dest="nolaunch",
             help="don't launch program automatically at supervisor startup"
-        ),
-        make_option("--exclude","-x",
+        )
+        parser.add_argument(
+            "--exclude",
+            "-x",
             metavar="PROG",
             action="append",
             dest="exclude",
             help="exclude program from supervisor config"
-        ),
-        make_option("--include","-i",
+        )
+        parser.add_argument(
+            "--include",
+            "-i",
             metavar="PROG",
             action="append",
             dest="include",
             help="don't exclude program from supervisor config"
-        ),
-        make_option("--autoreload","-r",
+        )
+        parser.add_argument(
+            "--autoreload",
+            "-r",
             metavar="PROG",
             action="append",
             dest="autoreload",
             help="restart program automatically when code files change"
                  " (debug mode only;"
                  " if not set then all programs are autoreloaded)"
-        ),
-        make_option("--noreload",
+        )
+        parser.add_argument(
+            "--noreload",
             action="store_true",
             dest="noreload",
             help="don't restart processes when code files change"
-        ),
-    )
+        )
 
     def run_from_argv(self,argv):
         #  Customize option handling so that it doesn't choke on any
@@ -163,6 +179,8 @@ class Command(BaseCommand):
         return super(Command,self).run_from_argv(argv)
 
     def handle(self, *args, **options):
+        args = args or tuple(options.pop('ctl-command'))
+
         #  We basically just construct the merged supervisord.conf file
         #  and forward it on to either supervisord or supervisorctl.
         #  Due to some very nice engineering on behalf of supervisord authors,
