@@ -1,3 +1,7 @@
+v0.4.0:
+
+  * Fix compatibility with Django 1.10; thanks Gabriel Duman.
+
 v0.3.4:
 
   * Fix cyclic import dependency in  Django 1.9; thanks Alexander Komkov.
